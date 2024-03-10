@@ -22,8 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     phone_number: DataTypes.STRING
   }, {
     sequelize,
-    modelName: 'user',
-    tableName: 'users'
+    modelName: 'User',
+    timestamps: true,
   });
   return User;
 };
