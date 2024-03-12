@@ -30,11 +30,6 @@ module.exports = {
         references: { model: 'Categories', key: 'id' },
         allowNull: true,
       },
-      group_id: {
-        type: Sequelize.INTEGER,
-        references: { model: 'Groups', key: 'id' },
-        allowNull: true,
-      },
       expense_type: Sequelize.ENUM('personal', 'shared', 'group'),
       receipt: Sequelize.TEXT, // or Sequelize.STRING for file paths/URLs
       created_by: Sequelize.INTEGER,

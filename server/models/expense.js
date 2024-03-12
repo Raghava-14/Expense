@@ -11,7 +11,6 @@ module.exports = (sequelize, DataTypes) => {
       Expense.belongsTo(models.User, { foreignKey: 'deleted_by', as: 'Deleter' });
       Expense.belongsTo(models.Currency, { foreignKey: 'currency_code' });
       Expense.belongsTo(models.Category, { foreignKey: 'category_id' });
-      Expense.belongsTo(models.Group, { foreignKey: 'group_id' });
     }
   };
   Expense.init({
@@ -29,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
     comment_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     currency_code: DataTypes.STRING,
     category_id: DataTypes.INTEGER,
-    group_id: DataTypes.INTEGER,
     expense_type: DataTypes.ENUM('personal', 'shared', 'group'),
     receipt: DataTypes.TEXT,
     created_by: DataTypes.INTEGER,
