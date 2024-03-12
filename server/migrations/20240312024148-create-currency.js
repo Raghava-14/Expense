@@ -11,7 +11,7 @@ module.exports = {
       name: {
         type: Sequelize.STRING
       },
-      full_name: {
+      code: {
         type: Sequelize.STRING
       },
       symbol: {
