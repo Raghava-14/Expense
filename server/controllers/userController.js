@@ -23,6 +23,14 @@ exports.register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    //Validate phone_number
+    if (phone_number) {
+        const phoneRegex = /^[0-9]{10,15}$/; // Adjust regex as needed
+        if (!phoneRegex.test(phone_number)) {
+          return res.status(400).send({ message: "Invalid phone number format." });
+        }
+    }
+
     // Create user
     const user = await User.create({ first_name, last_name, email, password_hash: hashedPassword, phone_number });
 
@@ -97,10 +105,28 @@ exports.updateUserInfo = async (req, res) => {
             return res.status(404).send({ message: "User not found." });
         }
 
+        // Validate and update phone_number
+        if ('phone_number' in req.body) {
+            if (phone_number) {
+                // Validate phone number format
+                const phoneRegex = /^[0-9]{10,15}$/; // Adjust regex as needed
+                if (!phoneRegex.test(phone_number)) {
+                    return res.status(400).send({ message: "Invalid phone number format." });
+                }
+
+                // Check for existing user with this phone number
+                const existingUserWithPhoneNumber = await User.findOne({ where: { phone_number } });
+                if (existingUserWithPhoneNumber && existingUserWithPhoneNumber.id !== user.id) {
+                    return res.status(400).send({ message: "Phone number is already in use." });
+                }
+            }
+            // This allows explicitly setting phone_number to null
+            user.phone_number = phone_number;
+        }
+
         // Update user information
         user.first_name = first_name || user.first_name;
         user.last_name = last_name || user.last_name;
-        user.phone_number = phone_number || user.phone_number;
 
         await user.save();
 
