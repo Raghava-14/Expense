@@ -1,10 +1,11 @@
-//const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 const { User } = require('../models'); // Adjust path as necessary
 const jwt = require('jsonwebtoken');
 
 // Register new user
 exports.register = async (req, res) => {
   try {
+    
     const { first_name, last_name, email, password, phone_number } = req.body;
 
     // Basic validation
@@ -20,10 +21,10 @@ exports.register = async (req, res) => {
     }
 
     // Hash password
-    //const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await User.create({ first_name, last_name, email, password_hash: req.body.password, phone_number });
+    const user = await User.create({ first_name, last_name, email, password_hash: hashedPassword, phone_number });
 
     // Success response
     res.status(201).send({ message: "User registered successfully.", userId: user.id });
@@ -45,7 +46,8 @@ exports.login = async (req, res) => {
       }
   
       // Directly compare the plaintext passwords
-      if (user.password_hash !== password) {
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
         return res.status(401).send({ message: "Invalid password." });
     }
   
@@ -115,10 +117,16 @@ exports.updateUserPassword = async (req, res) => {
         const { currentPassword, newPassword } = req.body;
         const user = await User.findByPk(req.user.id);
 
-        // Verify current password
-        if (user.password_hash !== currentPassword) {
+        // Verify current password with bcrypt
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!isMatch) {
             return res.status(401).send({ message: "Current password is incorrect." });
-          }
+        }
+
+        //Old password cannot be euql to new password
+        if (currentPassword === newPassword) {
+            return res.status(400).send({ message: "New password cannot be same as old password." });
+        }
 
         // Validate the new password against your criteria
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -126,8 +134,13 @@ exports.updateUserPassword = async (req, res) => {
             return res.status(400).send({ message: "New Password does not meet complexity requirements." });
         }
 
-        // Directly save the new password
-        user.password_hash = newPassword;
+
+        // Hash the new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    
+        // Update password
+        user.password_hash = hashedNewPassword;
         await user.save();
 
         res.send({ message: "Password updated successfully." });
