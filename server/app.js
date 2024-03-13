@@ -1,7 +1,7 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
-const userRoutes = require('./routes/userRoutes'); // Adjust path as necessary
+const userRoutes = require('./routes/userRoute'); // Adjust path as necessary
 const app = express();
 
 app.use(express.json());
