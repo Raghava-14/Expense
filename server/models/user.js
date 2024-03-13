@@ -1,6 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
-const bcrypt = require('bcrypt');
+//const bcrypt = require('bcryptjs'); // Use bcryptjs for compatibility
+
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -36,11 +37,12 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.SharedExpense, {foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE'});
     }
 
-    // Method to compare passwords
-    validPassword(password) {
-      return bcrypt.compareSync(password, this.password_hash);
-    }
+    // Method to compare submitted password with stored hash
+    //validPassword(password) {
+     // return bcrypt.compareSync(password, this.password_hash);
+   // }
   }
+
   User.init({
     id: {
       type: DataTypes.INTEGER,
@@ -59,13 +61,15 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty: true, // Ensures the email field is not empty
       }
     },
-    password_hash: DataTypes.STRING(255),
+    password_hash: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     profile_picture: DataTypes.STRING(255),
     phone_number: {
       type: DataTypes.STRING,
-      validate: {
-        is: /^[0-9]{10,15}$/
-      }
+      allowNull: true,
+      unique: true,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -78,20 +82,6 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
-    hooks: {
-      beforeCreate: async (user) => {
-        if (user.password_hash) {
-          const salt = await bcrypt.genSaltSync(10, 'a');
-          user.password_hash = bcrypt.hashSync(user.password_hash, salt);
-        }
-      },
-      beforeUpdate: async (user) => {
-        if (user.password_hash) {
-          const salt = await bcrypt.genSaltSync(10, 'a');
-          user.password_hash = bcrypt.hashSync(user.password_hash, salt);
-        }
-      }
-    },
     timestamps: true, // Enable Sequelize to automatically manage createdAt and updatedAt
     tableName: 'Users' // Ensure the model uses the exact table name
   });

@@ -1,7 +1,8 @@
-const bcrypt = require('bcrypt');
+//const bcrypt = require('bcryptjs');
 const { User } = require('../models'); // Adjust path as necessary
 const jwt = require('jsonwebtoken');
 
+// Register new user
 exports.register = async (req, res) => {
   try {
     const { first_name, last_name, email, password, phone_number } = req.body;
@@ -18,8 +19,11 @@ exports.register = async (req, res) => {
       return res.status(400).send({ message: "Email is already in use." });
     }
 
+    // Hash password
+    //const hashedPassword = await bcrypt.hash(password, 10);
+
     // Create user
-    const user = await User.create({ first_name, last_name, email, password_hash: password, phone_number });
+    const user = await User.create({ first_name, last_name, email, password_hash: req.body.password, phone_number });
 
     // Success response
     res.status(201).send({ message: "User registered successfully.", userId: user.id });
@@ -40,10 +44,10 @@ exports.login = async (req, res) => {
         return res.status(404).send({ message: "User not found." });
       }
   
-      // Verify password
-      if (!user.validPassword(password)) {
+      // Directly compare the plaintext passwords
+      if (user.password_hash !== password) {
         return res.status(401).send({ message: "Invalid password." });
-      }
+    }
   
       // Generate JWT Token
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -58,3 +62,125 @@ exports.login = async (req, res) => {
       res.status(500).send({ message: "Server error during user login." });
     }
   };
+  
+
+  //View user info
+  exports.getUserInfo = async (req, res) => {
+    try {
+        const userId = req.user.id; // Assuming you store user ID in req.user during JWT verification
+
+        const user = await User.findByPk(userId, {
+            attributes: { exclude: ['password_hash'] }, // Exclude password_hash from the response
+        });
+
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        res.send(user);
+    } catch (error) {
+        console.error("Error fetching user info:", error);
+        res.status(500).send({ message: "Error fetching user information." });
+    }
+};
+
+//Update user info
+exports.updateUserInfo = async (req, res) => {
+    try {
+        const { first_name, last_name, phone_number } = req.body;
+
+        // Find the user
+        const user = await User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        // Update user information
+        user.first_name = first_name || user.first_name;
+        user.last_name = last_name || user.last_name;
+        user.phone_number = phone_number || user.phone_number;
+
+        await user.save();
+
+        res.send({ message: "User information updated successfully." });
+    } catch (error) {
+        console.error("Error updating user information:", error);
+        res.status(500).send({ message: "Server error." });
+    }
+};
+
+//Update user password
+exports.updateUserPassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findByPk(req.user.id);
+
+        // Verify current password
+        if (user.password_hash !== currentPassword) {
+            return res.status(401).send({ message: "Current password is incorrect." });
+          }
+
+        // Validate the new password against your criteria
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).send({ message: "New Password does not meet complexity requirements." });
+        }
+
+        // Directly save the new password
+        user.password_hash = newPassword;
+        await user.save();
+
+        res.send({ message: "Password updated successfully." });
+    } catch (error) {
+        console.error("Error updating user password:", error);
+        res.status(500).send({ message: "Server error." });
+    }
+};
+
+
+//Update user email
+exports.updateUserEmail = async (req, res) => {
+    try {
+        const { newEmail } = req.body;
+        // Ensure new email is not already in use
+        const existingUser = await User.findOne({ where: { email: newEmail } });
+        if (existingUser) {
+            return res.status(400).send({ message: "Email already in use." });
+        }
+
+        // Ideally, send a verification email to the newEmail address here
+        // For demonstration, let's assume it's directly updated
+
+        const user = await User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        user.email = newEmail;
+        await user.save();
+
+        res.send({ message: "Email update successful. Please verify your new email." });
+    } catch (error) {
+        console.error("Error updating user email:", error);
+        res.status(500).send({ message: "Server error." });
+    }
+};
+
+//Delete user
+exports.deleteUserAccount = async (req, res) => {
+    try {
+        const userId = req.user.id; // Assuming you have the user's ID from the JWT token
+
+        // Find and delete the user
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        await user.destroy();
+        res.send({ message: "User account deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting user account:", error);
+        res.status(500).send({ message: "Server error." });
+    }
+};
