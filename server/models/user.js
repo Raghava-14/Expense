@@ -53,11 +53,20 @@ module.exports = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING(255),
       allowNull: false, // Update this based on whether you allow nullable emails
-      unique: true // Assuming email should be unique per user
+      unique: true, // Assuming email should be unique per user
+      validate: {
+        isEmail: true, // Validates the email address
+        notEmpty: true, // Ensures the email field is not empty
+      }
     },
     password_hash: DataTypes.STRING(255),
     profile_picture: DataTypes.STRING(255),
-    phone_number: DataTypes.STRING(255),
+    phone_number: {
+      type: DataTypes.STRING,
+      validate: {
+        is: /^[0-9]{10,15}$/
+      }
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false
