@@ -1,5 +1,6 @@
 'use strict';
 const { Model } = require('sequelize');
+const bcrypt = require('bcrypt');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -34,6 +35,11 @@ module.exports = (sequelize, DataTypes) => {
       // SharedExpenses association
       User.hasMany(models.SharedExpense, {foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE'});
     }
+
+    // Method to compare passwords
+    validPassword(password) {
+      return bcrypt.compareSync(password, this.password_hash);
+    }
   }
   User.init({
     id: {
@@ -63,6 +69,20 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password_hash) {
+          const salt = await bcrypt.genSaltSync(10, 'a');
+          user.password_hash = bcrypt.hashSync(user.password_hash, salt);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.password_hash) {
+          const salt = await bcrypt.genSaltSync(10, 'a');
+          user.password_hash = bcrypt.hashSync(user.password_hash, salt);
+        }
+      }
+    },
     timestamps: true, // Enable Sequelize to automatically manage createdAt and updatedAt
     tableName: 'Users' // Ensure the model uses the exact table name
   });
