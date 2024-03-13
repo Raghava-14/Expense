@@ -1,14 +1,25 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Group extends Model {
     static associate(models) {
-      // define association here
+      // Association with User
+      Group.belongsTo(models.User, { foreignKey: 'created_by', as: 'Creator', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+      
+      // Association with GroupMember
+      Group.hasMany(models.GroupMember, { foreignKey: 'group_id', as: 'GroupMembers', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+      // Association with SharedExpense
+      Group.hasMany(models.SharedExpense, { foreignKey: 'group_id', as: 'SharedExpenses', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     }
   }
   Group.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false
@@ -18,15 +29,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'Other'
     },
     info: DataTypes.TEXT,
-    invitation_link: DataTypes.STRING, // Ensure uniqueness if needed
+    invitation_link: {
+      type: DataTypes.STRING,
+      // Add unique: true if you decide to enforce uniqueness at the application level
+    },
     created_by: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Group',
-    // Ensure timestamps are handled correctly
     timestamps: true,
     updatedAt: 'updated_at',
-    createdAt: 'created_at'
+    createdAt: 'created_at',
+    tableName: 'Groups' // Explicitly define the table name for clarity
   });
   return Group;
 };

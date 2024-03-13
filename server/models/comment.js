@@ -5,7 +5,11 @@ module.exports = (sequelize, DataTypes) => {
   class Comment extends Model {
     static associate(models) {
       // define association here
+
+      //Association for expense_id
       Comment.belongsTo(models.Expense, { foreignKey: 'expense_id', as: 'Expense' });
+
+      //Association for user_id
       Comment.belongsTo(models.User, { foreignKey: 'user_id', as: 'User' });
     }
   };
@@ -25,7 +29,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Comment',
-    timestamps: true
+    timestamps: true,
+    tableName: 'Comments'
   });
   return Comment;
 };

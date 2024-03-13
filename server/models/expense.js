@@ -6,14 +6,26 @@ module.exports = (sequelize, DataTypes) => {
   class Expense extends Model {
     static associate(models) {
       // Define association here
+
+      //Association for User
       Expense.belongsTo(models.User, { foreignKey: 'created_by', as: 'Creator' });
       Expense.belongsTo(models.User, { foreignKey: 'updated_by', as: 'Updater' });
       Expense.belongsTo(models.User, { foreignKey: 'deleted_by', as: 'Deleter' });
+
+      //Association for Currency
       Expense.belongsTo(models.Currency, { foreignKey: 'currency_code' });
+
+      //Association for Category
       Expense.belongsTo(models.Category, { foreignKey: 'category_id' });
     }
   };
   Expense.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false
+    },
     name: DataTypes.STRING,
     amount: DataTypes.DECIMAL(10, 2),
     date: DataTypes.DATE,
@@ -42,6 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Expense',
     timestamps: true, // Enable Sequelize to use `created_at` and `updated_at`
     paranoid: true, // Enable soft delete, it will use `deleted_at`
+    tableName: 'Expenses'
   });
   return Expense;
 };

@@ -4,8 +4,10 @@ module.exports = (sequelize, DataTypes) => {
   class Friendship extends Model {
     static associate(models) {
       // define association here
-      Friendship.belongsTo(models.User, { foreignKey: 'requester_id', as: 'requester' });
-      Friendship.belongsTo(models.User, { foreignKey: 'addressee_id', as: 'addressee' });
+
+      //Association for User
+      Friendship.belongsTo(models.User, { foreignKey: 'requester_id', as: 'Requester', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+      Friendship.belongsTo(models.User, { foreignKey: 'addressee_id', as: 'Addressee', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     }
   }
   Friendship.init({
@@ -22,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Friendship',
-    timestamps: false, // Adjust based on your table definition
+    timestamps: true, // Adjust based on your table definition
     tableName: 'Friendships'
   });
   return Friendship;

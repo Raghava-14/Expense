@@ -6,14 +6,16 @@ module.exports = (sequelize, DataTypes) => {
   class Category extends Model {
     static associate(models) {
       // Define association here
-      Category.hasMany(models.Category, {
-        as: 'Subcategories',
-        foreignKey: 'parent_id',
-      });
+
+      //Association for SubCategories referencing the parent category
+      Category.hasMany(models.Category, {as: 'Subcategories',foreignKey: 'parent_id'});
+
+      //Association for Expenses referencing the category
+      Category.hasMany(models.Expense, {as: 'Expenses',foreignKey: 'category_id'});
     }
   };
   Category.init({
-    category_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
@@ -24,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Category',
     timestamps: true, // to handle createdAt and updatedAt
+    tableName: 'Categories'
   });
   return Category;
 };
