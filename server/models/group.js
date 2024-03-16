@@ -25,13 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     group_type: {
-      type: DataTypes.ENUM('Home', 'Couple', 'Friends', 'Trip', 'Vacation', 'Other'),
+      type: DataTypes.ENUM('Home', 'Couple', 'Friends', 'Vacation', 'Other'),
       defaultValue: 'Other'
     },
     info: DataTypes.TEXT,
     invitation_link: {
       type: DataTypes.STRING,
-      // Add unique: true if you decide to enforce uniqueness at the application level
+      unique: true// Add unique: true if you decide to enforce uniqueness at the application level
     },
     created_by: DataTypes.INTEGER
   }, {

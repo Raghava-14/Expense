@@ -4,37 +4,44 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Friendships', {
       friendship_id: {
-        allowNull: false,
-        autoIncrement: true,
+        type: Sequelize.INTEGER,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        autoIncrement: true
       },
       requester_id: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: { model: 'Users', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       addressee_id: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: { model: 'Users', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       status: {
-        type: Sequelize.ENUM('pending', 'accepted', 'blocked', 'deleted'),
-        defaultValue: 'pending'
+        type: Sequelize.ENUM('pending', 'accepted', 'blocked', 'declined', 'unblocked', 'deleted')
       },
-      created_at: {
+      invitation_token: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
         allowNull: false,
-        type: Sequelize.DATE
+        unique: true
       },
-      updated_at: {
-        allowNull: false,
-        type: Sequelize.DATE
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false
       }
     });
   },
+
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('Friendships');
   }

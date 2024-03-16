@@ -18,9 +18,15 @@ module.exports = (sequelize, DataTypes) => {
     },
     requester_id: DataTypes.INTEGER,
     addressee_id: DataTypes.INTEGER,
-    status: DataTypes.ENUM('pending', 'accepted', 'blocked', 'deleted'),
-    created_at: DataTypes.DATE,
-    updated_at: DataTypes.DATE
+    status: DataTypes.ENUM('pending', 'accepted', 'blocked', 'declined', 'unblocked', 'deleted'),
+    invitation_token: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      unique: true
+    },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Friendship',
