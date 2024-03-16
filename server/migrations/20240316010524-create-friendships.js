@@ -38,6 +38,12 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false
+      },
+      updated_by: { // Adding the new field
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: 'Users', key: 'id' },
+        onUpdate: 'CASCADE'
       }
     });
   },

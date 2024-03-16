@@ -5,9 +5,11 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
-      //Association for User
+      // Association for User
       Friendship.belongsTo(models.User, { foreignKey: 'requester_id', as: 'Requester', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
       Friendship.belongsTo(models.User, { foreignKey: 'addressee_id', as: 'Addressee', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+      // Adding the association for updated_by
+      Friendship.belongsTo(models.User, { foreignKey: 'updated_by', as: 'Updater' });
     }
   }
   Friendship.init({
@@ -26,11 +28,12 @@ module.exports = (sequelize, DataTypes) => {
       unique: true
     },
     createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE
+    updatedAt: DataTypes.DATE,
+    updated_by: DataTypes.INTEGER // Adding the new field
   }, {
     sequelize,
     modelName: 'Friendship',
-    timestamps: true, // Adjust based on your table definition
+    timestamps: true,
     tableName: 'Friendships'
   });
   return Friendship;

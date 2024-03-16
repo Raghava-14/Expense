@@ -21,6 +21,9 @@ router.post('/block/:userId', verifyToken, friendshipController.blockUser);
 //Unblock
 router.post('/unblock/:userId', verifyToken, friendshipController.unblockUser);
 
+//List friends
+router.get('/list-friends', verifyToken, friendshipController.listFriends);
+
 //List blocked users
 router.get('/blocked-users', verifyToken, friendshipController.listBlockedUsers);
 
