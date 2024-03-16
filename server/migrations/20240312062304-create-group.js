@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false
       },
       group_type: {
-        type: Sequelize.ENUM('Home', 'Couple', 'Friends', 'Trip', 'Vacation', 'Other'),
+        type: Sequelize.ENUM('Home', 'Couple', 'Friends', 'Vacation', 'Trip', 'Family', 'Other'),
         defaultValue: 'Other'
       },
       info: {
