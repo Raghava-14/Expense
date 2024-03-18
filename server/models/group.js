@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     group_type: {
-      type: DataTypes.ENUM('Home', 'Couple', 'Friends', 'Vacation', 'Other'),
+      type: DataTypes.ENUM('Home', 'Couple', 'Friends', 'Vacation', 'Trip', 'Family', 'Other'),
       defaultValue: 'Other'
     },
     info: DataTypes.TEXT,
@@ -33,14 +33,25 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       unique: true// Add unique: true if you decide to enforce uniqueness at the application level
     },
-    created_by: DataTypes.INTEGER
+    created_by: DataTypes.INTEGER,
+    updated_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    deleted_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
   }, {
     sequelize,
     modelName: 'Group',
     timestamps: true,
-    updatedAt: 'updated_at',
-    createdAt: 'created_at',
-    tableName: 'Groups' // Explicitly define the table name for clarity
+    tableName: 'Groups', // Explicitly define the table name for clarity
+    paranoid: true
   });
   return Group;
 };
