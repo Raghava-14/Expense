@@ -1,4 +1,4 @@
-const { Group, GroupMember, User, Friendship } = require('../models'); // Adjust the path as necessary
+const { Group, GroupMember, User, Friendship, sequelize } = require('../models'); // Adjust the path as necessary
 const { v4: uuidv4 } = require('uuid');
 const { Sequelize, Model, DataTypes } = require('sequelize');
 const group = require('../models/group');
@@ -41,6 +41,10 @@ exports.generateNewInvitationLink = async (req, res) => {
     const userId = req.user.id; // Assuming you have user's ID in req.user.id from JWT
   
     try {
+      const group = await Group.findOne({ where: { id: groupId } });
+      if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
       // Check if the current user is a member of the group
       const isMember = await GroupMember.findOne({
         where: {
@@ -74,69 +78,80 @@ exports.generateNewInvitationLink = async (req, res) => {
   
   
   // Join group through invitation link
-  exports.joinGroupByLink = async (req, res) => {
-    const { link } = req.params;
-    const joiningUserId = req.user.id; // The ID of the user joining the group
+exports.joinGroupByLink = async (req, res) => {
+  const { link } = req.params;
+  const joiningUserId = req.user.id; // The ID of the user joining the group
 
-    try {
-        const group = await Group.findOne({ where: { invitation_link: link } });
-        if (!group) {
-            return res.status(404).send({ message: "Group not found." });
-        }
-
-        // Check if user is already a member of the group
-        const isMember = await GroupMember.findOne({
-            where: { group_id: group.id, user_id: joiningUserId }
-        });
-        if (isMember) {
-            return res.status(409).send({ message: "You are already a member of this group." });
-        }
-
-        // Fetch all existing group members
-        const members = await GroupMember.findAll({
-            where: { group_id: group.id },
-            attributes: ['user_id']
-        });
-
-        // Add user to group
-        await GroupMember.create({
-            group_id: group.id,
-            user_id: joiningUserId
-        });
-
-        // Create friendship records with all existing group members
-        await Promise.all(members.map(async (member) => {
-            // Skip if the member is the user joining the group
-            if (member.user_id !== joiningUserId) {
-                // Check if there's an existing friendship, update if exists, create if not
-                const [friendship, created] = await Friendship.findOrCreate({
-                    where: {
-                        [Op.or]: [
-                            { requester_id: joiningUserId, addressee_id: member.user_id },
-                            { requester_id: member.user_id, addressee_id: joiningUserId }
-                        ]
-                    },
-                    defaults: {
-                        requester_id: joiningUserId,
-                        addressee_id: member.user_id,
-                        status: 'accepted'
-                    }
-                });
-
-                if (!created) {
-                    // Update the status to 'accepted' if the friendship already existed but was not in 'accepted' status
-                    friendship.status = 'accepted';
-                    await friendship.save();
-                }
-            }
-        }));
-
-        res.status(201).send({ message: "Joined group successfully." });
-    } catch (error) {
-        console.error("Error joining group and updating friendships:", error);
-        res.status(500).send({ message: "Server error." });
+  try {
+    const group = await Group.findOne({ where: { invitation_link: link } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
     }
+
+    // Check for an existing membership record, including soft-deleted ones
+    let member = await GroupMember.findOne({
+      where: { group_id: group.id, user_id: joiningUserId },
+      paranoid: false // Include soft-deleted records
+    });
+
+    // If the user is already a member (including soft-deleted membership), handle accordingly
+    if (member) {
+      if (member.deletedAt) {
+        // If the membership was soft-deleted, restore it
+        await member.update({ deletedAt: null, deleted_by: null }, { paranoid: false });
+        // No need to update friendships as they remain intact
+        return res.send({ message: "Membership restored. You are a member again." });
+      } else {
+        // If the membership exists and is active
+        return res.status(409).send({ message: "You are already a member of this group." });
+      }
+    }
+
+    // If no existing membership record was found, proceed to add the user to the group
+    member = await GroupMember.create({
+      group_id: group.id,
+      user_id: joiningUserId
+    });
+
+    // Fetch all current group members
+    const members = await GroupMember.findAll({
+      where: { group_id: group.id },
+      attributes: ['user_id']
+    });
+
+    // Create or update friendship records with all existing group members
+    await Promise.all(members.map(async (existingMember) => {
+      if (existingMember.user_id !== joiningUserId) {
+        const [friendship, created] = await Friendship.findOrCreate({
+          where: {
+            [Op.or]: [
+              { requester_id: joiningUserId, addressee_id: existingMember.user_id },
+              { requester_id: existingMember.user_id, addressee_id: joiningUserId }
+            ]
+          },
+          defaults: {
+            requester_id: joiningUserId,
+            addressee_id: existingMember.user_id,
+            status: 'accepted'
+          }
+        });
+
+        if (!created && friendship.status !== 'accepted') {
+          // If a friendship exists but is not in 'accepted' status, update it
+          friendship.status = 'accepted';
+          await friendship.save();
+        }
+      }
+    }));
+
+    res.status(201).send({ message: "Joined group successfully. Friendships updated." });
+  } catch (error) {
+    console.error("Error joining group and updating friendships:", error);
+    res.status(500).send({ message: "Server error." });
+  }
 };
+
+
   // Fetch group details by invitation link
 exports.getGroupByLink = async (req, res) => {
     const { link } = req.params;
@@ -160,7 +175,6 @@ exports.getGroupByLink = async (req, res) => {
 };
 
   
-
   // Update group details
 exports.updateGroupDetails = async (req, res) => {
     const { groupId } = req.params;
@@ -168,6 +182,11 @@ exports.updateGroupDetails = async (req, res) => {
     const { name, groupType, info } = req.body;
   
     try {
+      const group = await Group.findOne({ where: { id: groupId } });
+      if (!group) {
+        return res.status(404).send({ message: "Group not found." });
+      }
+
       // Ensure the user is a member of the group
       const isMember = await GroupMember.findOne({
         where: { group_id: groupId, user_id: userId }
@@ -192,6 +211,10 @@ exports.listGroupMembers = async (req, res) => {
     const userId = req.user.id; // UserID from JWT
   
     try {
+      const group = await Group.findOne({ where: { id: groupId } });
+      if (!group) {
+        return res.status(404).send({ message: "Group not found." });
+      }
       // Ensure the user is a member of the group
       const isMember = await GroupMember.findOne({
         where: { group_id: groupId, user_id: userId }
@@ -220,6 +243,10 @@ exports.softDeleteGroup = async (req, res) => {
   const userId = req.user.id; // UserID from JWT
   
   try {
+    const group = await Group.findOne({ where: { id: groupId } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
     // Ensure the user is a member of the group
     const isMember = await GroupMember.findOne({
       where: { group_id: groupId, user_id: userId }
@@ -258,7 +285,6 @@ exports.restoreGroup = async (req, res) => {
           where: { id: groupId },
           paranoid: false // Include soft-deleted records
       });
-
       if (!group) {
           return res.status(404).send({ message: "Group not found." });
       }
@@ -280,4 +306,143 @@ exports.restoreGroup = async (req, res) => {
   }
 };
 
-  
+
+// List all groups a user is a member of
+exports.listUserGroups = async (req, res) => {
+  const userId = req.user.id; // UserID from JWT
+
+  try {
+    const group = await Group.findOne({ where: { id: groupId } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
+      const groups = await GroupMember.findAll({
+        where: { user_id: userId },
+          include: [
+              {
+                  model: Group,
+                  as: 'Group',
+                  attributes: ['id', 'name', 'group_type', 'info', 'invitation_link', 'created_by'],
+                  where: { deletedAt: null } // Optional: Filter out soft-deleted groups if necessary
+              }
+          ],
+          attributes: ['group_id']
+      });
+
+      const groupDetails = groups.map(group => group.Group);
+      res.status(200).json(groupDetails);
+  } catch (error) {
+      console.error("Error listing user's groups:", error);
+      res.status(500).send({ message: "Server error." });
+  }
+};
+
+
+// Allow a user to exit a group
+exports.exitGroup = async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const group = await Group.findOne({ where: { id: groupId } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
+
+    const member = await GroupMember.findOne({
+      where: { group_id: groupId, user_id: userId },
+      paranoid: false
+    });
+
+    if (!member) {
+      return res.status(404).send({ message: "You are not a member of this group." });
+    }
+
+    if (member.deletedAt) {
+      return res.status(409).send({ message: "You have already exited this group." });
+    }
+
+    await member.update({ deleted_by: userId });
+    await member.destroy();
+    res.send({ message: "You have successfully exited the group." });
+  } catch (error) {
+    console.error("Error exiting the group:", error);
+    res.status(500).send({ message: "Server error." });
+  }
+};
+
+
+
+// Remove a user from a group
+exports.removeUserFromGroup = async (req, res) => {
+  const { groupId, userIdToRemove } = req.params;
+  const actionUserId = req.user.id; // UserID from JWT of the user performing the action
+
+  try {
+    const group = await Group.findOne({ where: { id: groupId } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
+
+    // Check if the action user is a member of the group
+    const actionUserMember = await GroupMember.findOne({ where: { group_id: groupId, user_id: actionUserId }, paranoid: false });
+    if (!actionUserMember || actionUserMember.deletedAt) {
+      return res.status(403).send({ message: "You must be a member of the group to remove users." });
+    }
+
+    const memberToRemove = await GroupMember.findOne({ where: { group_id: groupId, user_id: userIdToRemove }, paranoid: false });
+    if (!memberToRemove) {
+      return res.status(404).send({ message: "User not found in the group." });
+    }
+
+    if (memberToRemove.deletedAt) {
+      return res.status(409).send({ message: "User has already been removed from the group." });
+    }
+
+    await memberToRemove.update({ deleted_by: actionUserId });
+    await memberToRemove.destroy();
+    res.send({ message: "User has been successfully removed from the group." });
+  } catch (error) {
+    console.error("Error removing user from the group:", error);
+    res.status(500).send({ message: "Server error." });
+  }
+};
+
+
+
+
+// User restores themselves to a group
+exports.restoreUserToGroupSelf = async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const group = await Group.findOne({ where: { id: groupId } });
+    if (!group) {
+      return res.status(404).send({ message: "Group not found." });
+    }
+
+    const member = await GroupMember.findOne({
+      where: { group_id: groupId, user_id: userId },
+      paranoid: false
+    });
+
+    if (!member) {
+      return res.status(404).send({ message: "Group membership not found." });
+    }
+
+    if (member.deletedAt === null) {
+      return res.status(409).send({ message: "You are already a member of this group." });
+    }
+
+    // Explicitly set deletedAt and deleted_by to null
+    await member.restore();
+    await member.update({ deletedAt: null, deleted_by: null }, { paranoid: false });
+
+    res.send({ message: "You have been successfully restored to the group." });
+  } catch (error) {
+    console.error("Error restoring user to the group:", error);
+    res.status(500).send({ message: "Server error." });
+  }
+};
+

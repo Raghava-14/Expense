@@ -12,7 +12,7 @@ router.put('/:groupId/new-invitation-link', verifyToken, groupController.generat
 // Join a group through invitation link
 router.post('/join/:link', verifyToken, groupController.joinGroupByLink);
 
-// Fetch group details by invitation link
+// Get group details by invitation link
 router.get('/details/:link', verifyToken, groupController.getGroupByLink);
 
 // Update group details
@@ -26,5 +26,18 @@ router.delete('/:groupId/soft-delete', verifyToken, groupController.softDeleteGr
 
 // Restore a soft-deleted group
 router.post('/:groupId/restore', verifyToken, groupController.restoreGroup);
+
+// Allow a user to exit a group
+router.post('/:groupId/exit', verifyToken, groupController.exitGroup);
+
+// Remove a user from a group by another member
+router.delete('/:groupId/remove-user/:userIdToRemove', verifyToken, groupController.removeUserFromGroup);
+
+// List all groups a user is a member of
+router.get('/my-groups', verifyToken, groupController.listUserGroups);
+
+// User restores themselves to a group
+router.post('/:groupId/restore-self', verifyToken, groupController.restoreUserToGroupSelf);
+
 
 module.exports = router;

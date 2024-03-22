@@ -18,15 +18,16 @@ module.exports = (sequelize, DataTypes) => {
     },
     group_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
-    created_at: DataTypes.DATE,
-    updated_at: DataTypes.DATE
+    deleted_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true }
   }, {
     sequelize,
     modelName: 'GroupMember',
+    paranoid: true, // Enable paranoid mode for soft deletes
+    deletedAt: 'deletedAt', // Use the default 'deletedAt' column for paranoid mode
     timestamps: true,
-    tableName: 'GroupMembers',
-    createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    tableName: 'GroupMembers'
   });
   return GroupMember;
 };
