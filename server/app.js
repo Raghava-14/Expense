@@ -4,6 +4,8 @@ const express = require('express');
 const userRoutes = require('./routes/userRoute');
 const friendshipRoutes = require('./routes/friendshipRoute');
 const groupRoutes = require('./routes/groupRoute');
+const expenseRoutes = require('./routes/expenseRoute');
+const errorMiddleware = require('./middleware/errorMiddleware');
 
 
 const app = express();
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/friendships', friendshipRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use(errorMiddleware);
 
 // Other app setup...
 

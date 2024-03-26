@@ -23,10 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     expense_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
-    split_type: DataTypes.ENUM('equal', 'exact_amount', 'percentage', 'by_shares'),
     paid_amount: DataTypes.DECIMAL(10, 2),
     owed_amount: DataTypes.DECIMAL(10, 2),
-    group_id: DataTypes.INTEGER
+    group_id: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'SharedExpense',

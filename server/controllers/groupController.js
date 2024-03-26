@@ -445,4 +445,3 @@ exports.restoreUserToGroupSelf = async (req, res) => {
     res.status(500).send({ message: "Server error." });
   }
 };
-

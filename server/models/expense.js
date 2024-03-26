@@ -26,29 +26,36 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       allowNull: false
     },
-    name: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     amount: DataTypes.DECIMAL(10, 2),
     date: DataTypes.DATE,
-    repeats: { type: DataTypes.BOOLEAN, defaultValue: false },
     repeatInterval: {
       type: DataTypes.ENUM,
       values: ['Once', 'weekly', 'biweekly', 'monthly', 'yearly'],
       defaultValue: 'Once'
     },
-    nextRepeat: DataTypes.DATE,
-    email_reminder: { type: DataTypes.BOOLEAN, defaultValue: false },
+    nextRepeat: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     comment_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     currency_code: DataTypes.STRING,
     category_id: DataTypes.INTEGER,
-    expense_type: DataTypes.ENUM('personal', 'shared', 'group'),
+    expense_type: {
+      type: DataTypes.ENUM('personal', 'shared', 'group', 'settlement'),
+      defaultValue: 'personal'
+    },
+    split_type: DataTypes.ENUM('equal', 'exact_amount', 'percentage', 'by_shares'),
     receipt: DataTypes.TEXT,
     created_by: DataTypes.INTEGER,
     updated_by: DataTypes.INTEGER,
     deleted_by: DataTypes.INTEGER,
-    is_deleted: { type: DataTypes.BOOLEAN, defaultValue: false },
-    deleted_at: DataTypes.DATE,
-    created_at: DataTypes.DATE,
-    updated_at: DataTypes.DATE
+    deletedAt: DataTypes.DATE,
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Expense',
