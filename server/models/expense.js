@@ -52,8 +52,14 @@ module.exports = (sequelize, DataTypes) => {
     receipt: DataTypes.TEXT,
     created_by: DataTypes.INTEGER,
     updated_by: DataTypes.INTEGER,
-    deleted_by: DataTypes.INTEGER,
-    deletedAt: DataTypes.DATE,
+    deleted_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   }, {

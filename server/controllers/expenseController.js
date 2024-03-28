@@ -161,3 +161,147 @@ exports.viewBalanceWithUser = async (req, res, next) => {
   }
 };
 
+//View All Expenses
+exports.getExpenses = async (req, res, next) => {
+  const userId = req.user.id; // Assuming user ID is extracted from JWT token or session
+
+  try {
+    // Fetch personal expenses
+    const personalExpenses = await Expense.findAll({
+      where: { created_by: userId },
+      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type']
+    });
+
+    // Fetch shared and group expenses
+    const sharedExpenses = await SharedExpense.findAll({
+      where: { user_id: userId },
+      include: [
+        {
+          model: Expense,
+          as: 'Expense',
+          attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type']
+        }
+      ]
+    });
+
+    // Prepare the response
+    const response = {
+      personalExpenses: personalExpenses.map(pe => ({
+        type: 'personal',
+        id: pe.id,
+        name: pe.name,
+        amount: pe.amount,
+        date: pe.date,
+        splitType: pe.split_type,
+        categoryId: pe.category_id,
+        expenseType: pe.expense_type
+      })),
+      sharedAndGroupExpenses: sharedExpenses.map(se => ({
+        type: se.Expense.expense_type, // 'shared' or 'group'
+        id: se.Expense.id,
+        name: se.Expense.name,
+        amount: se.Expense.amount,
+        date: se.Expense.date,
+        splitType: se.Expense.split_type,
+        categoryId: se.Expense.category_id,
+        expenseType: se.Expense.expense_type,
+        yourContribution: se.paid_amount,
+        yourShare: se.owed_amount
+      }))
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error viewing expenses:', error);
+    next(error); // Forward to error handling middleware
+  }
+};
+
+
+//Soft delete an expense
+exports.deleteExpense = async (req, res, next) => {
+  const userId = req.user.id;
+  const { expenseId } = req.params; // Assuming expense ID is passed as a URL parameter
+
+  try {
+    
+    // Check if the user is involved in the expense
+    const isInvolved = await checkUserInvolvement(userId, expenseId);
+
+    if (!isInvolved) {
+      return res.status(403).json({ message: "You are not authorized to delete this expense." });
+    }
+
+
+    // Soft delete the expense
+    await Expense.update(
+      {deleted_by: userId},
+      {where: { id: expenseId }}
+    );
+    await Expense.destroy({
+      where: { id: expenseId },
+    });
+  
+
+    res.status(200).json({ message: "Expense successfully deleted." });
+  } catch (error) {
+    console.error('Error soft deleting expense:', error);
+    next(error);
+  }
+};
+async function checkUserInvolvement(userId, expenseId) {
+  // Check for personal expense
+  const personalExpense = await Expense.findOne({
+    where: { id: expenseId, created_by: userId },
+    paranoid: false,
+  });
+
+  if (personalExpense) return true;
+
+  // Check for shared or group expense
+  const sharedExpense = await SharedExpense.findOne({
+    where: { expense_id: expenseId, user_id: userId },
+    include: [{
+      model: Expense,
+      as: 'Expense',
+      paranoid: false,
+    }],
+  });
+
+  return !!sharedExpense;
+}
+
+
+//Restore an expense
+exports.restoreExpense = async (req, res, next) => {
+  const userId = req.user.id;
+  const { expenseId } = req.params;
+
+  try {
+    // Check if the user is involved in the expense
+    const isInvolved = await checkUserInvolvement(userId, expenseId);
+
+    if (!isInvolved) {
+      return res.status(403).json({ message: "You are not authorized to restore this expense." });
+    }
+
+
+    // Restore the expense
+    await Expense.update(
+      {deleted_by: null, },
+      {where: { id: expenseId }}
+    );
+    await Expense.restore({
+      where: { id: expenseId },
+      logging: console.log
+    });
+
+    res.status(200).json({ message: "Expense successfully restored." });
+  } catch (error) {
+    console.error('Error restoring expense:', error);
+    next(error);
+  }
+};
+
+
+//Update an expense
