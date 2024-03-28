@@ -1,6 +1,7 @@
 function calculateSharedExpenses({ amount, splitType, users, groupId, expenseId }) {
     let results = [];
     const totalPaidAmount = users.reduce((acc, user) => acc + parseFloat(user.paidAmount), 0);
+    
 
     if (totalPaidAmount !== amount) {
         throw new Error('The total paid amount must match the expense amount.');
@@ -13,12 +14,16 @@ function calculateSharedExpenses({ amount, splitType, users, groupId, expenseId 
             expense_id: expenseId,
             user_id: user.id,
             paid_amount: parseFloat(user.paidAmount),
-            owed_amount: parseFloat((equalShare - parseFloat(user.paidAmount)).toFixed(2)),
+            owed_amount: parseFloat(equalShare),
             group_id: groupId,
             }));
             break;
 
         case 'exact_amount':
+            const totalOwedAmount = users.reduce((acc, user) => acc + parseFloat(user.owedAmount), 0);
+            if (totalOwedAmount !== amount) {
+                throw new Error('The total owed amount must match the expense amount.');
+            }
             results = users.map(user => {
                 return {
                     expense_id: expenseId,
@@ -29,13 +34,7 @@ function calculateSharedExpenses({ amount, splitType, users, groupId, expenseId 
                     group_id: groupId,
                 };
             });
-            // Validation to ensure the sum of owed amounts results in 0 when offset by the paid amounts
-            const totalOwedAmount = results.reduce((acc, user) => acc + user.owed_amount, 0);
-            const netAmount = totalOwedAmount - totalPaidAmount;
-
-            if (netAmount !== 0) {
-                throw new Error('The sum of owed amounts must result in 0.');
-            }
+        
             break;
 
         case 'percentage':

@@ -16,7 +16,16 @@ app.use('/api/users', userRoutes);
 app.use('/api/friendships', friendshipRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/expenses', expenseRoutes);
+
+
+
+
 app.use(errorMiddleware);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ error: err.message });
+});
+
 
 // Other app setup...
 

@@ -1,9 +1,9 @@
 // controllers/expenseController.js 
 
-const { Expense, SharedExpense, GroupMember, User, sequelize, Balance } = require('../models'); 
-const calculateSharedExpenses = require('../helpers/calculateSharedExpenses'); 
-//const updateBalances = require('../helpers/updateBalances'); 
-//const updateBalancesForSettlement = require('../helpers/updateBalancesForSettlement'); // Implement this 
+const { Expense, SharedExpense, GroupMember, User, sequelize } = require('../models'); 
+const calculateSharedExpenses = require('../helpers/calculateSharedExpenses');
+const calculateNetBalanceForUser = require('../helpers/calculateNetBalanceForUser');
+const calculateBalanceAndListExpensesBetweenUsers = require('../helpers/calculateBalanceAndListExpensesBetweenUsers');
 
 //Create an expense
 exports.createExpense = async (req, res, next) => {
@@ -107,10 +107,9 @@ exports.createExpense = async (req, res, next) => {
             
           // Create shared expenses entries
           await SharedExpense.bulkCreate(sharedExpensesData, { transaction: t });
-  
-          // Update balances based on shared expenses data
-          //await updateBalances(sharedExpensesData, t);
         }
+
+
   
         return expense;
       });
@@ -123,3 +122,42 @@ exports.createExpense = async (req, res, next) => {
       next(error); // Pass any caught error to the centralized error handling middleware
     }
   };
+
+
+//Calculate Balances
+exports.getUserBalance = async (req, res, next) => {
+  try {
+    const userId = req.user.id; // Assuming you're extracting this from the auth token or request parameters
+    const balance = await calculateNetBalanceForUser(userId);
+    res.json({
+      message: "Net balance calculated successfully.",
+      data: balance
+    });
+  } catch (error) {
+    console.error("Error calculating user balance:", error);
+    next(error); // Pass to error handling middleware
+  }
+};
+
+
+//Balance between two users
+exports.viewBalanceWithUser = async (req, res, next) => {
+  const currentUserId = req.user.id;
+  const { peerUserId } = req.params; // Assuming you're getting this from the URL
+  // Validation to ensure current user is not equal to peer user
+  if (currentUserId === peerUserId) {
+    throw new Error("Current user cannot be the same as peer user.");
+  }
+
+  try {
+    const result = await calculateBalanceAndListExpensesBetweenUsers(currentUserId, peerUserId);
+    res.json({
+      message: `Balance and shared expenses with user ${peerUserId}`,
+      data: result
+    });
+  } catch (error) {
+    console.error("Error viewing balance with user:", error);
+    next(error); // Error handling
+  }
+};
+

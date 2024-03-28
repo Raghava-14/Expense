@@ -15,6 +15,13 @@ router.post('/', verifyToken, expenseController.createExpense);
 //Get all expenses
 //router.get('/', verifyToken, expenseController.getExpenses); 
 
+//Calculate Balances
+router.get('/balance', verifyToken, expenseController.getUserBalance);
+
+//Balance between two users
+router.get('/balance/:peerUserId', verifyToken, expenseController.viewBalanceWithUser);
+
+
  
  
 
