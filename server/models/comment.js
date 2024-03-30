@@ -14,6 +14,12 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   Comment.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false
+    },
     comment: {
       type: DataTypes.TEXT,
       allowNull: false
