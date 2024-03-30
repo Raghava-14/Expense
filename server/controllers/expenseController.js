@@ -1,6 +1,7 @@
 // controllers/expenseController.js 
 
-const { Expense, SharedExpense, GroupMember, User, sequelize } = require('../models'); 
+const { Expense, SharedExpense, GroupMember, User, Category, sequelize } = require('../models'); 
+const { Op, literal, fn, col } = require('sequelize');
 const calculateSharedExpenses = require('../helpers/calculateSharedExpenses');
 const calculateNetBalanceForUser = require('../helpers/calculateNetBalanceForUser');
 const calculateBalanceAndListExpensesBetweenUsers = require('../helpers/calculateBalanceAndListExpensesBetweenUsers');
@@ -305,3 +306,64 @@ exports.restoreExpense = async (req, res, next) => {
 
 
 //Update an expense
+
+
+//Categorize expenses for a month
+exports.getMonthlyExpensesByCategory = async (req, res) => {
+  const userId = req.user.id;
+  const { year, month, expenseType } = req.query;
+
+  // Parse year and month to integers
+  const yearInt = parseInt(year);
+  const monthInt = parseInt(month) - 1; // Month is 0-indexed in JS
+
+  // Calculate start and end dates for the query
+  const startDate = new Date(yearInt, monthInt, 1);
+  const endDate = new Date(yearInt, monthInt + 1, 0);
+
+  try {
+    // Determine the appropriate filtering condition based on the expenseType
+    let expenseTypeCondition = {};
+    if (expenseType === 'personal') {
+      expenseTypeCondition = { expense_type: 'personal', created_by: userId };
+    } else if (expenseType === 'shared' || expenseType === 'group') {
+      expenseTypeCondition = { expense_type: expenseType };
+    } // No condition needed for "both", as it includes all types
+
+    // Query to fetch expenses by category, considering the expenseType and date range
+    const expensesByCategory = await Expense.findAll({
+      attributes: [
+        [fn('SUM', col('amount')), 'totalAmount'],
+        [fn('COALESCE', col('Category.parent_id'), col('Category.id')), 'categoryId']
+      ],
+      where: {
+        ...expenseTypeCondition,
+        date: { [Op.between]: [startDate, endDate] },
+        [Op.or]: [
+          { created_by: userId }, // For personal or "both"
+          { '$SharedExpenses.user_id$': userId } // For shared/group or "both"
+        ]
+      },
+      include: [
+        {
+          model: Category,
+          attributes: []
+        },
+        {
+          model: SharedExpense,
+          as: 'SharedExpenses',
+          attributes: [],
+          required: false,
+          where: expenseType === 'both' ? {} : { user_id: userId },
+        }
+      ],
+      group: [fn('COALESCE', col('Category.parent_id'), col('Category.id'))],
+      raw: true,
+    });
+
+    res.json({ expensesByCategory });
+  } catch (error) {
+    console.error('Error fetching monthly expenses by category:', error);
+    res.status(500).send({ message: "Failed to fetch monthly expenses by category." });
+  }
+};

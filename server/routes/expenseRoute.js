@@ -24,7 +24,8 @@ router.get('/balance', verifyToken, expenseController.getUserBalance);
 //Balance between two users
 router.get('/balance/:peerUserId', verifyToken, expenseController.viewBalanceWithUser);
 
-
+//Categorize expenses
+router.get('/expenses-by-category', verifyToken, expenseController.getMonthlyExpensesByCategory);
  
  
 

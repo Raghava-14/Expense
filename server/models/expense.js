@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
 
       //Association for Category
       Expense.belongsTo(models.Category, { foreignKey: 'category_id' });
+
+      //Association for SharedExpenses
+      Expense.hasMany(models.SharedExpense, { foreignKey: 'expense_id', as: 'SharedExpenses' });
+
     }
   };
   Expense.init({
