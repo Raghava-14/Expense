@@ -27,6 +27,7 @@ router.get('/balance/:peerUserId', verifyToken, expenseController.viewBalanceWit
 //Categorize expenses
 router.get('/expenses-by-category', verifyToken, expenseController.getMonthlyExpensesByCategory);
  
- 
+ //Investment Expenses
+ router.get('/investment-expenses', verifyToken, expenseController.getMonthlyInvestmentExpenses);  
 
 module.exports = router; 
