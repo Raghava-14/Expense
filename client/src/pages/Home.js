@@ -10,7 +10,7 @@ const HomePage = () => {
         <p className="text-xl mb-8">
           The ultimate tool for managing your personal finances.
         </p>
-        <Link to="/login" className="bg-white hover:bg-gray-100 text-blue-700 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
+        <Link to="/register" className="bg-white hover:bg-gray-100 text-blue-700 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
           Get Started
         </Link>
       </div>
@@ -50,7 +50,7 @@ const HomePage = () => {
           </blockquote>
           <blockquote className="bg-white p-4 rounded shadow-lg">
             <p>"The group expenses feature is a game-changer for splitting bills. Love it!"</p>
-            <footer className="text-right">- John Smith</footer>
+            <footer className="text-right">- John Doe</footer>
           </blockquote>
         </div>
       </div>
