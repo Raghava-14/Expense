@@ -1,26 +1,33 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setCredentials(prevCredentials => ({ ...prevCredentials, [name]: value }));
+  };
+
+  const handleRememberMeChange = (e) => {
+    setRememberMe(e.target.checked);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Reset error message
+    setError('');
+
+    console.log('Attempting to log in with:', credentials);
 
     try {
       const response = await axios.post('http://localhost:3000/api/users/login', credentials);
-      // Save the received token to local storage or in-memory storage
+      console.log('Login response:', response);
       localStorage.setItem('token', response.data.token);
-      // Navigate to a protected route/dashboard
-      navigate('/dashboard'); // Update this path according to your routing setup
+      navigate('/dashboard');
     } catch (err) {
       setError('Failed to login. Please check your credentials.');
       console.error(err);
@@ -28,30 +35,27 @@ const Login = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-lg">
-        <div className="p-8">
-          <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
-          {error && <p className="text-red-500">{error}</p>}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input type="email" name="email" id="email" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input type="password" name="password" id="password" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-            </div>
-            <div>
-              <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Log in
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="flex flex-col items-center justify-center pt-10">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Login</h2>
+        {error && <p className="text-red-500">{error}</p>}
+        <form className="flex flex-col" onSubmit={handleSubmit}>
+          <input type="email" name="email" className="bg-gray-100 text-gray-900 border-0 rounded-md p-2 mb-4 focus:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition ease-in-out duration-150" placeholder="Email address" onChange={handleChange} required />
+          <input type="password" name="password" className="bg-gray-100 text-gray-900 border-0 rounded-md p-2 mb-4 focus:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition ease-in-out duration-150" placeholder="Password" onChange={handleChange} required />
+          <div className="flex items-center justify-between flex-wrap">
+            <label htmlFor="remember-me" className="text-sm text-gray-900 cursor-pointer">
+              <input type="checkbox" id="remember-me" className="mr-2" onChange={handleRememberMeChange} checked={rememberMe} />
+              Remember me
+            </label>
+            <button className="text-sm text-blue-500 hover:underline mb-0.5 focus:outline-none" onClick={() => {/* handle forgot password */}}>
+              Forgot password?</button>
+          </div>
+          <p className="text-gray-900 mt-4"> Don't have an account? <Link to="/register" className="text-sm text-blue-500 hover:underline">Signup</Link></p>
+          <button type="submit" className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold py-2 px-4 rounded-md mt-4 hover:bg-indigo-600 hover:to-blue-600 transition ease-in-out duration-150">Login</button>
+        </form>
       </div>
     </div>
   );
-}
+} 
 
 export default Login;

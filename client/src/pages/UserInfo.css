@@ -1,0 +1,50 @@
+.user-info-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+  }
+  
+  .user-info-field, .password-btn, .delete-btn {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .label, .value {
+    margin-right: 10px;
+  }
+  
+  .input, .edit-btn, .save-btn, .password-btn, .delete-btn {
+    padding: 5px 10px;
+    margin-left: auto;
+  }
+  
+  .edit-btn, .save-btn, .password-btn, .delete-btn {
+    cursor: pointer;
+  }
+  
+  .save-btn, .password-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .edit-btn {
+    background-color: #FFC107;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .delete-btn {
+    background-color: #F44336;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .error {
+    color: #F44336;
+  }
+  

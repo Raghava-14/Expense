@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Layout from '../components/Layout';
 
 const HomePage = () => {
   return (
     <div className="container mx-auto">
+      <Layout />
       {/* Hero Section */}
       <div className="text-center py-16 bg-gradient-to-r from-blue-500 to-green-500 text-white">
         <h1 className="text-5xl font-bold mb-6">Welcome to Expense Tracker</h1>
