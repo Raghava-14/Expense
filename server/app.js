@@ -7,10 +7,12 @@ const groupRoutes = require('./routes/groupRoute');
 const expenseRoutes = require('./routes/expenseRoute');
 const commentRoutes = require('./routes/commentRoute');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const cors = require('cors');
 
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 
 app.use('/api/users', userRoutes);

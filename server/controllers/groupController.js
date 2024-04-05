@@ -312,28 +312,22 @@ exports.listUserGroups = async (req, res) => {
   const userId = req.user.id; // UserID from JWT
 
   try {
-    const group = await Group.findOne({ where: { id: groupId } });
-    if (!group) {
-      return res.status(404).send({ message: "Group not found." });
-    }
-      const groups = await GroupMember.findAll({
-        where: { user_id: userId },
-          include: [
-              {
-                  model: Group,
-                  as: 'Group',
-                  attributes: ['id', 'name', 'group_type', 'info', 'invitation_link', 'created_by'],
-                  where: { deletedAt: null } // Optional: Filter out soft-deleted groups if necessary
-              }
-          ],
-          attributes: ['group_id']
-      });
+    const groups = await GroupMember.findAll({
+      where: { user_id: userId }, // Use the correct column name
+      include: [{
+        model: Group,
+        as: 'Group', // Make sure this matches the alias in your association
+        attributes: ['id', 'name', 'group_type', 'info', 'invitation_link', 'created_by'],
+        where: { deletedAt: null },
+      }],
+      attributes: ['group_id'],
+    });
 
-      const groupDetails = groups.map(group => group.Group);
-      res.status(200).json(groupDetails);
+    const groupDetails = groups.map(groupMember => groupMember.Group);
+    res.status(200).json(groupDetails);
   } catch (error) {
-      console.error("Error listing user's groups:", error);
-      res.status(500).send({ message: "Server error." });
+    console.error("Error listing user's groups:", error);
+    res.status(500).send({ message: "Server error." });
   }
 };
 

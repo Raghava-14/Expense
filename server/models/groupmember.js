@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class GroupMember extends Model {
     static associate(models) {
       // Association with Group
-      GroupMember.belongsTo(models.Group, { foreignKey: 'group_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+      GroupMember.belongsTo(models.Group, { foreignKey: 'group_id', as: 'Group', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
       // Association with User
       GroupMember.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     }
