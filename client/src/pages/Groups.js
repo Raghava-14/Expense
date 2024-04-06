@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Groups = () => {
   const [groups, setGroups] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -23,16 +25,18 @@ const Groups = () => {
     fetchGroups();
   }, []);
 
+  const handleGroupClick = (groupId) => {
+    navigate(`/dashboard/groups/${groupId}`);
+  };
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">My Groups</h2>
       {groups.length > 0 ? (
         <div className="space-y-4">
           {groups.map((group) => (
-            <div key={group.id} className="p-4 bg-white shadow rounded-lg">
+            <div key={group.id} className="p-4 bg-white shadow rounded-lg" onClick={() => handleGroupClick(group.id)}>
               <h3 className="text-lg font-semibold">{group.name}</h3>
-              <p>Type: {group.group_type}</p>
-              <p>{group.info}</p>
             </div>
           ))}
         </div>

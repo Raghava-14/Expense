@@ -12,6 +12,7 @@ import Insights from './pages/Insights';
 import Expenses from './pages/Expenses';
 import Friends from './pages/Friends';
 import Groups from './pages/Groups';
+import GroupDetails from './pages/GroupDetails';
 
 const Header = () => {
   const location = useLocation(); // To determine the current route
@@ -67,6 +68,7 @@ function App() {
             <Route path="expenses" element={<Expenses />} />
             <Route path="friends" element={<Friends />} />
             <Route path="groups" element={<Groups />} />
+            <Route path="groups/:groupId" element={<GroupDetails />} />
             {/* Redirect to Insights by default if just "/dashboard" is accessed */}
             <Route index element={<Insights />} />
           </Route>
