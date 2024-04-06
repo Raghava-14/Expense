@@ -6,6 +6,9 @@ const groupController = require('../controllers/groupController'); // Adjust the
 // Create a new group
 router.post('/', verifyToken, groupController.createGroup);
 
+//Get Group details
+router.get('/:groupId/details', verifyToken, groupController.getGroupDetails);
+
 // Generate a new invitation link for a group
 router.put('/:groupId/new-invitation-link', verifyToken, groupController.generateNewInvitationLink);
 

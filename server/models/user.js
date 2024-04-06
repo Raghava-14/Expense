@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Friendship, {as: 'Addressee', foreignKey: 'addressee_id', onDelete: 'CASCADE', onUpdate: 'CASCADE'});
 
       // Groups created by the user
-      User.hasMany(models.Group, {foreignKey: 'created_by', onDelete: 'SET NULL', onUpdate: 'CASCADE'});
+      User.hasMany(models.Group, {foreignKey: 'created_by', as: 'Creator', onDelete: 'SET NULL', onUpdate: 'CASCADE'});
+      User.hasMany(models.Group, {foreignKey: 'updated_by', as: 'Updater', onDelete: 'SET NULL', onUpdate: 'CASCADE'});
 
       // GroupMembers association
       User.hasMany(models.GroupMember, {foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE'});

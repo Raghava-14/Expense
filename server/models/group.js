@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Association with User
       Group.belongsTo(models.User, { foreignKey: 'created_by', as: 'Creator', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+      Group.belongsTo(models.User, { foreignKey: 'updated_by', as: 'Updater', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
       
       // Association with GroupMember
       Group.hasMany(models.GroupMember, { foreignKey: 'group_id', as: 'GroupMembers', onDelete: 'CASCADE', onUpdate: 'CASCADE' });

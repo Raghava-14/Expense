@@ -34,6 +34,46 @@ exports.createGroup = async (req, res) => {
 };
 
 
+// Get Group Details
+exports.getGroupDetails = async (req, res) => {
+  const { groupId } = req.params;
+
+  try {
+    const groupDetails = await Group.findByPk(groupId, {
+      include: [
+        {
+          model: User,
+          as: 'Creator',
+          attributes: ['first_name']
+        },
+        {
+          model: User,
+          as: 'Updater',
+          attributes: ['first_name']
+        }
+      ]
+    });
+
+    if (!groupDetails) {
+      return res.status(404).send({ message: "Group not found." });
+    }
+
+    // Transform the response to include user names instead of IDs
+    const transformedDetails = {
+      ...groupDetails.toJSON(),
+      created_by: groupDetails.Creator.first_name,
+      updated_by: groupDetails.Updater.first_name
+    };
+
+    res.status(200).json(transformedDetails);
+  } catch (error) {
+    console.error("Error fetching group details:", error);
+    res.status(500).send({ message: "Server error." });
+  }
+};
+
+
+
 
 // Generate a new invitation link for a group
 exports.generateNewInvitationLink = async (req, res) => {

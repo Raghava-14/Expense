@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const [groupDetails, setGroupDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editableDetails, setEditableDetails] = useState({
     name: '',
-    group_type: '',
     info: ''
   });
 
@@ -49,6 +49,15 @@ useEffect(() => {
 }, [fetchGroupDetails, fetchMembers]);
 
   const handleEdit = () => setEditMode(!editMode);
+  const handleCancelEdit = () => {
+    // Reset editable details to current group details and exit edit mode
+    setEditableDetails({
+      name: groupDetails.name,
+      group_type: groupDetails.group_type,
+      info: groupDetails.info
+    });
+    setEditMode(false);
+  };
 
   const handleChange = (e) => setEditableDetails({ ...editableDetails, [e.target.name]: e.target.value });
 
@@ -82,34 +91,48 @@ useEffect(() => {
         await axios.delete(`http://localhost:3000/api/groups/${groupId}/soft-delete`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        // Redirect or refresh page after deletion
+        navigate('/dashboard/groups');
       } catch (error) {
         console.error("Error deleting group:", error);
       }
     }
   };
 
+
+  const handleExitGroup = async () => {
+    const confirmExit = window.confirm("Are you sure you want to exit the group?");
+
+    if (confirmExit) {
+      try {
+        await axios.post(`http://localhost:3000/api/groups/${groupId}/exit`, {}, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        // Optionally, redirect the user after exiting
+        navigate('/dashboard/groups'); // Adjust according to your routing
+      } catch (error) {
+        console.error("Error exiting group:", error);
+      }
+    }
+  };
+
+
   if (!groupDetails) return <div>Loading...</div>;
 
   return (
     <div>
-      <h2>Group Details</h2>
       {editMode ? (
-        <form onSubmit={handleSubmit}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+          <label>Group Name:</label>
           <input type="text" name="name" value={editableDetails.name} onChange={handleChange} />
-          <select name="group_type" value={editableDetails.group_type} onChange={handleChange}>
-            {/* Options */}
-            <option value="Home">Home</option>
-            <option value="Couple">Couple</option>
-            <option value="Friends">Friends</option>
-            <option value="Vacation">Vacation</option>
-            <option value="Trip">Trip</option>
-            <option value="Family">Family</option>
-            <option value="Other">Other</option>
-          </select>
+
+          <label>Information:</label>
           <textarea name="info" value={editableDetails.info} onChange={handleChange} />
-          <button type="submit">Save Changes</button>
-        </form>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button type="submit" onClick={handleSubmit} class="cursor-pointer transition-all bg-green-500 text-white px-6 py-2 rounded-lg border-green-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] px-10">Save Changes</button>
+            <button onClick={handleCancelEdit} class="cursor-pointer transition-all bg-red-500 text-white px-6 py-2 rounded-lg border-red-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] px-10">Cancel</button>
+          </div>
+        </div>
       ) : (
         <>
           {/* Display group details */}
@@ -118,22 +141,18 @@ useEffect(() => {
           <p>Information: {groupDetails.info}</p>
           <p>Invitation Link: {groupDetails.invitation_link}</p>
           <p>Members: {members}</p>
-          <button onClick={handleEdit} className="bg-green-900 text-white bg-green-400 border border-green-400 border-b-4 font-medium overflow-hidden relative px-4 py-2 rounded-md hover:brightness-150 hover:border-t-4 hover:border-b active:opacity-75 outline-none duration-300 group ml-2">
-            <span className="bg-green-400 shadow-green-400 absolute -top-[150%] left-0 inline-flex w-80 h-[5px] rounded-md opacity-50 group-hover:top-[150%] duration-500 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)]"></span>
-            <span className="relative">Edit</span>
-          </button>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+            <button onClick={handleEdit} class="cursor-pointer transition-all bg-green-500 text-white px-6 py-2 rounded-lg border-green-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] px-10">Edit</button>
+            <button onClick={handleGenerateNewLink} class="cursor-pointer transition-all bg-blue-500 text-white px-6 py-2 rounded-lg border-blue-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]px-10 py-3">Generate New Invitation Link</button>
+            <button onClick={handleDeleteGroup} class="cursor-pointer transition-all bg-red-500 text-white px-6 py-2 rounded-lg border-red-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]px-10 py-3">Delete Group</button>
+            <button onClick={handleExitGroup} class="cursor-pointer transition-all bg-red-500 text-white px-6 py-2 rounded-lg border-red-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px] px-10 py-2.5">Exit Group</button>
+          </div>
         </>
       )}
-      <button onClick={handleGenerateNewLink} className="bg-sky-900 text-white bg-sky-400 border border-sky-400 border-b-4 font-medium overflow-hidden relative px-4 py-2 rounded-md hover:brightness-150 hover:border-t-4 hover:border-b active:opacity-75 outline-none duration-300 group ml-2">
-            <span className="bg-sky-400 shadow-sky-400 absolute -top-[150%] left-0 inline-flex w-80 h-[5px] rounded-md opacity-50 group-hover:top-[150%] duration-500 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)]"></span>
-            <span className="relative">Generate New Invitation Link</span>
-          </button>
-      <button onClick={handleDeleteGroup} className="bg-red-900 text-white bg-red-400 border border-red-400 border-b-4 font-medium overflow-hidden relative px-4 py-2 rounded-md hover:brightness-150 hover:border-t-4 hover:border-b active:opacity-75 outline-none duration-300 group ml-2">
-            <span className="bg-red-400 shadow-red-400 absolute -top-[150%] left-0 inline-flex w-80 h-[5px] rounded-md opacity-50 group-hover:top-[150%] duration-500 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)]"></span>
-            <span className="relative">Delete Group</span>
-          </button>
     </div>
   );
 };
 
 export default GroupDetails;
+
