@@ -6,6 +6,7 @@ const friendshipRoutes = require('./routes/friendshipRoute');
 const groupRoutes = require('./routes/groupRoute');
 const expenseRoutes = require('./routes/expenseRoute');
 const commentRoutes = require('./routes/commentRoute');
+const categoryRoutes = require('./routes/categoryRoute');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const cors = require('cors');
 
@@ -20,6 +21,7 @@ app.use('/api/friendships', friendshipRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/expenses', commentRoutes);
+app.use('/api/categories', categoryRoutes);
 
 
 
