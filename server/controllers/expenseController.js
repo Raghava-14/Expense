@@ -1,5 +1,3 @@
-// controllers/expenseController.js 
-
 const { Expense, SharedExpense, GroupMember, User, Category, sequelize } = require('../models'); 
 const { Op, literal, fn, col } = require('sequelize');
 const calculateSharedExpenses = require('../helpers/calculateSharedExpenses');
@@ -74,7 +72,7 @@ exports.createExpense = async (req, res, next) => {
           }
         }
         
-        // Create the expense
+        // Actual creation of the expense
         const expense = await Expense.create({
           name,
           amount,
@@ -217,6 +215,63 @@ exports.getExpenses = async (req, res, next) => {
     next(error); // Forward to error handling middleware
   }
 };
+
+
+// View details of a specific expense
+exports.getExpenseDetails = async (req, res, next) => {
+  const userId = req.user.id;
+  const { expenseId } = req.params;
+
+  try {
+    // Attempt to fetch the expense as a personal expense
+    let expenseDetails = await Expense.findOne({
+      where: { id: expenseId, created_by: userId },
+      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type'],
+      include: [
+        {
+          model: Category,
+          attributes: ['name']
+        }
+      ]
+    });
+
+    // If the expense is not found as a personal expense, try fetching it as a shared/group expense
+    if (!expenseDetails) {
+      const sharedExpenseDetails = await SharedExpense.findOne({
+        where: { expense_id: expenseId, user_id: userId },
+        include: [
+          {
+            model: Expense,
+            as: 'Expense',
+            attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type'],
+            include: [
+              {
+                model: Category,
+                attributes: ['name']
+              }
+            ]
+          }
+        ]
+      });
+
+      if (sharedExpenseDetails) {
+        expenseDetails = sharedExpenseDetails.Expense;
+        expenseDetails.dataValues.yourContribution = sharedExpenseDetails.paid_amount;
+        expenseDetails.dataValues.yourShare = sharedExpenseDetails.owed_amount;
+      }
+    }
+
+    if (expenseDetails) {
+      res.status(200).json({ expenseDetails });
+    } else {
+      res.status(404).json({ message: "Expense not found or you're not authorized to view it." });
+    }
+  } catch (error) {
+    console.error('Error viewing expense details:', error);
+    next(error);
+  }
+};
+
 
 
 //Soft delete an expense
