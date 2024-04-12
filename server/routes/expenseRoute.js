@@ -9,7 +9,7 @@ router.post('/', verifyToken, expenseController.createExpense);
 //Get all expenses
 router.get('/', verifyToken, expenseController.getExpenses); 
 
-// Vview an expense details
+// View a specific expense details
 router.get('/:expenseId/details', verifyToken, expenseController.getExpenseDetails);
 
 //Update an expense

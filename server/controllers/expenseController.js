@@ -1,4 +1,4 @@
-const { Expense, SharedExpense, GroupMember, User, Category, sequelize } = require('../models'); 
+const { Expense, SharedExpense, Group, GroupMember, User, Category, sequelize } = require('../models'); 
 const { Op, literal, fn, col } = require('sequelize');
 const calculateSharedExpenses = require('../helpers/calculateSharedExpenses');
 const calculateNetBalanceForUser = require('../helpers/calculateNetBalanceForUser');
@@ -160,61 +160,86 @@ exports.viewBalanceWithUser = async (req, res, next) => {
   }
 };
 
-//View All Expenses
+
+// View All Expenses
 exports.getExpenses = async (req, res, next) => {
-  const userId = req.user.id; // Assuming user ID is extracted from JWT token or session
+  const userId = req.user.id;
 
   try {
-    // Fetch personal expenses
-    const personalExpenses = await Expense.findAll({
-      where: { created_by: userId },
-      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type']
-    });
-
-    // Fetch shared and group expenses
-    const sharedExpenses = await SharedExpense.findAll({
-      where: { user_id: userId },
+    const allExpenses = await Expense.findAll({
+      where: {
+        [Op.or]: [
+          { created_by: userId },
+          { '$SharedExpenses.user_id$': userId }
+        ],
+      },
       include: [
         {
-          model: Expense,
-          as: 'Expense',
-          attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type']
-        }
-      ]
+          model: SharedExpense,
+          as: 'SharedExpenses',
+          required: false,
+          where: { user_id: userId },
+          paranoid: false,
+          include: [
+            { model: User, as: 'User', attributes: ['id', 'first_name'] },
+            { model: Group, as: 'Group', attributes: ['name'] }
+          ]
+        },
+        { model: Category, as: 'Category', attributes: ['name'] }
+      ],
+      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type', 'created_by', 'deletedAt'],
+      paranoid: false,
+      order: [['date', 'DESC']]
     });
 
-    // Prepare the response
-    const response = {
-      personalExpenses: personalExpenses.map(pe => ({
-        type: 'personal',
-        id: pe.id,
-        name: pe.name,
-        amount: pe.amount,
-        date: pe.date,
-        splitType: pe.split_type,
-        categoryId: pe.category_id,
-        expenseType: pe.expense_type
-      })),
-      sharedAndGroupExpenses: sharedExpenses.map(se => ({
-        type: se.Expense.expense_type, // 'shared' or 'group'
-        id: se.Expense.id,
-        name: se.Expense.name,
-        amount: se.Expense.amount,
-        date: se.Expense.date,
-        splitType: se.Expense.split_type,
-        categoryId: se.Expense.category_id,
-        expenseType: se.Expense.expense_type,
-        yourContribution: se.paid_amount,
-        yourShare: se.owed_amount
-      }))
-    };
+    let personalExpenses = [];
+    let sharedAndGroupExpenses = [];
 
-    res.status(200).json(response);
+    allExpenses.forEach(expense => {
+      const formattedExpense = formatExpenseResponse(expense, userId); // Pass userId as an argument
+      if (expense.expense_type === 'personal') {
+        personalExpenses.push(formattedExpense);
+      } else {
+        sharedAndGroupExpenses.push(formattedExpense);
+      }
+    });
+
+    res.status(200).json({
+      personalExpenses,
+      sharedAndGroupExpenses
+    });
   } catch (error) {
     console.error('Error viewing expenses:', error);
-    next(error); // Forward to error handling middleware
+    next(error);
   }
 };
+
+// Adjust the helper function to accept userId as a parameter
+function formatExpenseResponse(expense, userId) {
+  let expenseResponse = {
+    type: expense.expense_type,
+    id: expense.id,
+    name: expense.name,
+    amount: expense.amount,
+    date: expense.date,
+    splitType: expense.split_type,
+    categoryId: expense.category_id,
+    expenseType: expense.expense_type,
+    category: expense.Category?.name
+  };
+
+  if (expense.expense_type !== 'personal') {
+    // Correctly use the find method to search for the SharedExpense entry that matches the userId
+    const sharedExpense = expense.SharedExpenses.find(se => se.user_id === userId) || {};
+    expenseResponse.yourContribution = sharedExpense.paid_amount || null;
+    expenseResponse.yourShare = sharedExpense.owed_amount || null;
+    if (sharedExpense.Group) {
+      expenseResponse.groupName = sharedExpense.Group.name; // Now correctly referenced
+    }
+  }
+
+  return expenseResponse;
+}
 
 
 // View details of a specific expense
@@ -223,54 +248,91 @@ exports.getExpenseDetails = async (req, res, next) => {
   const { expenseId } = req.params;
 
   try {
-    // Attempt to fetch the expense as a personal expense
-    let expenseDetails = await Expense.findOne({
-      where: { id: expenseId, created_by: userId },
-      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type'],
+    // Fetch the expense, regardless of type
+    const expense = await Expense.findOne({
+      where: { id: expenseId },
+      paranoid: false,
+      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type', 'createdAt', 'updated_by','updatedAt', 'deleted_by', 'deletedAt'],
       include: [
         {
           model: Category,
-          attributes: ['name']
+          attributes: ['name'],
+        },
+        {
+          model: SharedExpense,
+          as: 'SharedExpenses',
+          attributes: ['paid_amount', 'owed_amount'],
+          include: [{ // Include user details for shared expenses
+            model: User, as: 'User', attributes: ['first_name'] },
+            { model: Group, as: 'Group', attributes: ['name'] }
+          ],
+          required: false,
+        },
+        { // Include creator's first name for all expenses
+          model: User,
+          as: 'Creator',
+          attributes: ['first_name'],
+        },
+        { // Include Updater's first name for all expenses
+          model: User,
+          as: 'Updater',
+          attributes: ['first_name'],
+        },
+        { // Include Deleter's first name for all expenses
+          model: User,
+          as: 'Deleter',
+          attributes: ['first_name'],
         }
-      ]
+      ],
     });
 
-    // If the expense is not found as a personal expense, try fetching it as a shared/group expense
-    if (!expenseDetails) {
-      const sharedExpenseDetails = await SharedExpense.findOne({
-        where: { expense_id: expenseId, user_id: userId },
-        include: [
-          {
-            model: Expense,
-            as: 'Expense',
-            attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type'],
-            include: [
-              {
-                model: Category,
-                attributes: ['name']
-              }
-            ]
-          }
-        ]
-      });
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found." });
+    }
 
-      if (sharedExpenseDetails) {
-        expenseDetails = sharedExpenseDetails.Expense;
-        expenseDetails.dataValues.yourContribution = sharedExpenseDetails.paid_amount;
-        expenseDetails.dataValues.yourShare = sharedExpenseDetails.owed_amount;
+    // Prepare the response object based on expense type
+    let expenseDetails = {
+      id: expense.id,
+      name: expense.name,
+      amount: expense.amount,
+      date: expense.date,
+      categoryId: expense.category_id,
+      expenseType: expense.expense_type,
+      categoryName: expense.Category.name,
+      splitType: expense.split_type,
+      createdAt: expense.createdAt.toISOString().split('T')[0], // Just the date part
+      createdBy: expense.Creator?.first_name, // Creator's first name
+      updatedAt: expense.updatedAt.toISOString().split('T')[0],
+      updatedBy: expense.Updater?.first_name,
+      deletedBy: expense.Deleter?.first_name,
+      deletedAt: expense.deletedAt?.toISOString().split('T')[0],
+    };
+
+    if (expense.expense_type === 'personal') {
+      // Exclude split_type for personal expenses
+      delete expenseDetails.splitType;
+    } else {
+      // For shared or group expenses, include user contributions and shares
+      expenseDetails.sharedExpensesDetails = expense.SharedExpenses.map(sharedExpense => ({
+        userName: sharedExpense.User.first_name,
+        Contribution: sharedExpense.paid_amount,
+        Share: sharedExpense.owed_amount,
+      }));
+
+      if (expense.expense_type === 'group') {
+        // Additional detail for group expenses
+        expenseDetails.groupName = expense.Group?.name;
       }
     }
 
-    if (expenseDetails) {
-      res.status(200).json({ expenseDetails });
-    } else {
-      res.status(404).json({ message: "Expense not found or you're not authorized to view it." });
-    }
+    res.status(200).json({ expenseDetails });
   } catch (error) {
     console.error('Error viewing expense details:', error);
     next(error);
   }
 };
+
+
 
 
 
@@ -347,6 +409,10 @@ exports.restoreExpense = async (req, res, next) => {
       {deleted_by: null, },
       {where: { id: expenseId }}
     );
+    await Expense.restore({
+      where: { id: expenseId },
+      logging: console.log
+    })
     await Expense.restore({
       where: { id: expenseId },
       logging: console.log

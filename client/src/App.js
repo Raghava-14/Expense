@@ -10,6 +10,7 @@ import UserInfo from './pages/UserInfo';
 import UpdatePassword from './pages/UpdatePassword';
 import Insights from './pages/Insights';
 import Expenses from './pages/Expenses';
+import ExpenseDetails from './pages/ExpenseDetails';
 import Friends from './pages/Friends';
 import Groups from './pages/Groups';
 import GroupDetails from './pages/GroupDetails';
@@ -62,10 +63,11 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<SignUpPage />} />
           <Route path="/update-password" element={<UpdatePassword />} />
-          <Route path="/dashboard" element={<Dashboard />}>
+          <Route path="/dashboard/" element={<Dashboard />}>
             <Route path="userinfo" element={<UserInfo />} />
             <Route path="insights" element={<Insights />} />
             <Route path="expenses" element={<Expenses />} />
+            <Route path="expenses/:expenseId" element={<ExpenseDetails />} />
             <Route path="friends" element={<Friends />} />
             <Route path="groups" element={<Groups />} />
             <Route path="groups/:groupId" element={<GroupDetails />} />
