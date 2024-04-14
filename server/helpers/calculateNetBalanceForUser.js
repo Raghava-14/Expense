@@ -16,13 +16,14 @@ async function calculateNetBalanceForUser(userId) {
   // Calculate net balance
   expenses.forEach(expense => {
     // If the user is the payer, add owed_amount to their net balance
-    if (expense.user_id === userId && expense.owed_amount < 0) {
-      netBalance += Math.abs(expense.owed_amount);
+    if (expense.user_id === userId && expense.paid_amount > 0) {
+      netBalance += (expense.paid_amount - expense.owed_amount);
+      console.log("netBalance: ", netBalance);
+    }else{
+      netBalance -= (expense.owed_amount - expense.paid_amount);
+      console.log("netBalance: ", netBalance);
     }
-    // If the user owes money, subtract it from their net balance
-    if (expense.user_id === userId && expense.owed_amount > 0) {
-      netBalance -= expense.owed_amount;
-    }
+    
   });
 
   return { userId: userId, netBalance: netBalance.toFixed(2) };

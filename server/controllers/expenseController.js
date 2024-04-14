@@ -333,9 +333,6 @@ exports.getExpenseDetails = async (req, res, next) => {
 };
 
 
-
-
-
 //Soft delete an expense
 exports.deleteExpense = async (req, res, next) => {
   const userId = req.user.id;

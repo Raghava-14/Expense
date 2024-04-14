@@ -28,11 +28,11 @@ async function calculateBalanceAndListExpensesBetweenUsers(currentUserId, peerUs
         let balanceForExpense = 0;
         // If the current user paid for the expense
         if (currentExpense.paid_amount > 0) {
-          balanceForExpense = parseFloat(peerExpense.owed_amount);
+          balanceForExpense = -parseFloat(peerExpense.owed_amount);
         } 
         // If the peer user paid for the expense
         if (peerExpense.paid_amount > 0) {
-          balanceForExpense = -parseFloat(currentExpense.owed_amount);
+          balanceForExpense = parseFloat(currentExpense.owed_amount);
         }
         
         netBalance += balanceForExpense;
