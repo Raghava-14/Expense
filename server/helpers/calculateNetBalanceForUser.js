@@ -18,10 +18,8 @@ async function calculateNetBalanceForUser(userId) {
     // If the user is the payer, add owed_amount to their net balance
     if (expense.user_id === userId && expense.paid_amount > 0) {
       netBalance += (expense.paid_amount - expense.owed_amount);
-      console.log("netBalance: ", netBalance);
     }else{
       netBalance -= (expense.owed_amount - expense.paid_amount);
-      console.log("netBalance: ", netBalance);
     }
     
   });

@@ -1,247 +1,375 @@
 import React, { useState, useEffect } from 'react';
+import Modal from 'react-modal';
 import axios from 'axios';
 
-const CreateExpenseForm = ({ onExpenseCreated, onCancel }) => {
+Modal.setAppElement('#root');
+
+const customStyles = {
+    content: {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      marginRight: '-50%',
+      transform: 'translate(-50%, -50%)',
+      width: '50%',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      display: 'flex',     // Enable flex container
+      flexDirection: 'column',  // Stack children vertically
+      alignItems: 'stretch',  // Align children to stretch full width of the container
+      padding: '20px'  // Add some padding around the content
+    }
+  };
+  
+
+const initialFormData = () => ({
+  name: '',
+  amount: '',
+  date: new Date().toISOString().slice(0, 10), // Default to today's date
+  currency_code: 'USD',
+  category_id: '',
+  receipt: '',
+  split_type: 'equal',
+  users: [{
+    id: '',
+    paidAmount: '0',
+    owedAmount: '0'
+  }],
+  group_id: ''
+});
+
+const CreateExpenseForm = ({ isOpen, onRequestClose }) => {
   const [expenseType, setExpenseType] = useState('personal');
-  const [formData, setFormData] = useState({
-    name: '',
-    amount: '',
-    date: new Date().toISOString().slice(0, 10),
-    currency_code: 'USD',
-    category_id: '',
-    group_id: '',
-    split_type: 'equal',
-    sharedDetails: []
-  });
-  const [categories, setCategories] = useState([]);
-  const [groups, setGroups] = useState([]);
+  const [formData, setFormData] = useState(initialFormData);
   const [friends, setFriends] = useState([]);
-  const [feedback, setFeedback] = useState({ message: '', type: '' });
+  const [groups, setGroups] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token');
       try {
-        const [categoriesRes, groupsRes, friendsRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/categories', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:3000/api/groups/my-groups', { headers: { Authorization: `Bearer ${token}` } }),
+        const [friendsRes, groupsRes, categoriesRes, userRes] = await Promise.all([
           axios.get('http://localhost:3000/api/friendships/list-friends', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('http://localhost:3000/api/groups/my-groups', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('http://localhost:3000/api/categories/', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('http://localhost:3000/api/users/me', { headers: { Authorization: `Bearer ${token}` } })
         ]);
-        setCategories(categoriesRes.data);
-        setGroups(groupsRes.data);
         setFriends(friendsRes.data);
+        setGroups(groupsRes.data);
+        setCategories(categoriesRes.data.flatMap(cat => cat.Subcategories.map(sub => ({
+          id: sub.id,
+          name: `${cat.name} - ${sub.name}`
+        }))));
+        setCurrentUser(userRes.data);
+        setFormData(formData => ({
+          ...formData,
+          users: [{
+            id: userRes.data.id,
+            paidAmount: '0',
+            owedAmount: '0',
+            name: userRes.data.first_name
+          }]
+        })); // Initialize users with current user ID
       } catch (error) {
-        console.error('Error fetching data: ', error);
-        setFeedback('Failed to fetch dropdown data. Please try again.');
+        console.error("Error fetching data:", error);
       }
     };
     fetchData();
   }, []);
+  
 
-  const handleInputChange = (e) => {
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData(initialFormData()); // Reset form data when modal closes
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        users: [{
+          id: currentUser.id, // Ensure the current user's ID is used
+          paidAmount: '0',
+          owedAmount: '0'
+        }]
+      }));
+    }
+  }, [currentUser]); // Dependency on currentUser being loaded
+  
+
+  const handleExpenseTypeChange = (e) => {
+    const newType = e.target.value;
+    setExpenseType(newType);
+    if (newType === 'personal') {
+      setFormData({
+        ...initialFormData(),
+        expense_type: newType
+      });
+    } else {
+      if (!formData.users.length || formData.users[0].id !== currentUser.id) {
+        setFormData(prev => ({
+          ...prev,
+          expense_type: newType,
+          users: [{
+            id: currentUser.id,
+            paidAmount: '0',
+            owedAmount: '0'
+          }]
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          expense_type: newType
+        }));
+      }
+    }
+    if (newType === 'shared' || newType === 'group') {
+        addUserField(); // Automatically add a user field if none exist
+      }
+  };
+  
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-  };
+    let formattedValue = value;
 
-  const handleSharedDetailsChange = (index, field, value) => {
-    const updatedSharedDetails = [...formData.sharedDetails];
-    updatedSharedDetails[index] = { ...updatedSharedDetails[index], [field]: value };
-    setFormData({ ...formData, sharedDetails: updatedSharedDetails });
-  };
+    // Convert numerical values to floats for amount fields
+    if (name === 'amount' || name === 'paidAmount' || name === 'owedAmount') {
+        formattedValue = parseFloat(value) || 0; // Default to 0 if conversion fails
+    }
 
-  const addSharedDetail = () => {
-    setFormData({
-      ...formData,
-      sharedDetails: [...formData.sharedDetails, { user_id: '', paid_amount: 0, owed_amount: 0 }]
+    // Convert IDs to integers
+    if (name === 'category_id' || name === 'group_id') {
+        formattedValue = parseInt(value, 10) || null; // Default to null if conversion fails
+    }
+
+    setFormData(prev => ({ ...prev, [name]: formattedValue }));
+};
+
+const handleUserChange = (index, field, value) => {
+    let formattedValue = value;
+    // Converting numeric values to the correct type
+    if (field === 'paidAmount' || field === 'owedAmount') {
+        formattedValue = parseFloat(value) || 0;
+    }
+
+    if (field === 'id') {
+        formattedValue = parseInt(value, 10) || null;
+    }
+
+    setFormData(prev => {
+        const updatedUsers = prev.users.map((user, idx) => {
+            if (idx === index) {
+                return { ...user, [field]: formattedValue };
+            }
+            return user;
+        });
+        return { ...prev, users: updatedUsers };
     });
-  };
+};
+  
+  
 
-  const removeSharedDetail = (index) => {
-    const filteredSharedDetails = formData.sharedDetails.filter((_, i) => i !== index);
-    setFormData({ ...formData, sharedDetails: filteredSharedDetails });
+const addUserField = () => {
+    setFormData(prev => ({
+        ...prev,
+        users: [...prev.users, { id: null, paidAmount: 0, owedAmount: 0 }]
+    }));
+};
+  
+
+  const removeUserField = (index) => {
+    const filteredUsers = formData.users.filter((_, idx) => idx !== index);
+    setFormData(prev => ({ ...prev, users: filteredUsers }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
+    if (!formData.name || !formData.amount || formData.users.some(user => !user.id)) {
+      alert("Please fill in all required fields and ensure all users are selected.");
+      return;
+    }
   
-    // Initialize payload with formData
-    let payload = { ...formData };
-  
-    // Adjust the payload based on the expense type
-    switch (expenseType) {
-      case 'personal':
-        delete payload.group_id;
-        delete payload.sharedDetails;
-        break;
-      case 'shared':
-      case 'group':
-        // Ensure sharedDetails is formatted correctly for shared and group types
-        payload.sharedDetails = formData.sharedDetails.map(detail => ({
-          userId: detail.user_id,
-          paidAmount: detail.paid_amount,
-          owedAmount: detail.owed_amount,
-        }));
-        if (expenseType === 'shared') {
-          delete payload.group_id; // Remove group_id for shared expenses
+    const payload = {
+      name: formData.name,
+      amount: formData.amount,
+      date: formData.date,
+      currency_code: formData.currency_code,
+      category_id: formData.category_id,
+      expense_type: expenseType, // Directly use state
+      ...(expenseType !== 'personal' && {
+        group_id: formData.group_id || undefined,
+        sharedDetails: {
+          splitType: formData.split_type,
+          users: formData.users.map(user => ({
+            id: user.id, // Ensure IDs are properly sent
+            paidAmount: user.paidAmount || '0',
+            owedAmount: user.owedAmount || '0'
+          }))
         }
-        break;
-      default:
-        // Handle any other expense types if necessary
-        break;
+      })
     };
+
+    const validUsers = formData.users.every(user => user.id && user.paidAmount !== undefined);
+    if (!validUsers) {
+        alert("Some users are missing IDs or payment details.");
+        return;
+    }
+
+    console.log("Payload being sent:", JSON.stringify(payload));
   
+    const token = localStorage.getItem('token');
     try {
-      const response = await axios.post('http://localhost:3000/api/expenses', payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // Utilize response here if needed, for example:
-      setFeedback({ message: 'Expense created successfully!', type: 'success' });
-      onExpenseCreated(); // Refresh or reset form as needed
-      onCancel(); // Close form or perform additional cleanup
+      await axios.post('http://localhost:3000/api/expenses', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      }); 
+      alert('Expense created successfully');
+      onRequestClose(); // Close the modal
+      window.location.reload(); // Refresh the page to show new data
     } catch (error) {
-      setFeedback({ message: error.response?.data?.message || 'Failed to create expense.', type: 'error' });
+      console.error("Error creating expense:", error);
+      alert('Failed to create expense.');
     }
   };
   
-
+  
 
   return (
-    <div>
-      <h2>Create Expense</h2>
-      {feedback.message && (
-        <p style={{ color: feedback.type === 'error' ? 'red' : 'green' }}>{feedback.message}</p>
-      )}
-      <form onSubmit={handleSubmit}>
-        {/* Expense Type Selection */}
-        <div>
-          <label>
-            <input
-              type="radio"
-              name="expenseType"
-              value="personal"
-              checked={expenseType === 'personal'}
-              onChange={() => setExpenseType('personal')}
-            /> Personal
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="expenseType"
-              value="shared"
-              checked={expenseType === 'shared'}
-              onChange={() => setExpenseType('shared')}
-            /> Shared
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="expenseType"
-              value="group"
-              checked={expenseType === 'group'}
-              onChange={() => setExpenseType('group')}
-            /> Group
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onRequestClose}
+      style={customStyles}
+      contentLabel="Create Expense Modal"
+    >
+      <h2>Create New Expense</h2>
+      <form onSubmit={handleSubmit} className="expense-form">
+        <div className="form-control">
+          <label>Expense Type:
+            <div>
+              <label><input type="radio" name="expenseType" value="personal" checked={expenseType === 'personal'} onChange={handleExpenseTypeChange} /> Personal</label>
+              <label><input type="radio" name="expenseType" value="shared" checked={expenseType === 'shared'} onChange={handleExpenseTypeChange} /> Shared</label>
+              <label><input type="radio" name="expenseType" value="group" checked={expenseType === 'group'} onChange={handleExpenseTypeChange} /> Group</label>
+            </div>
           </label>
         </div>
-  
-        {/* Common Fields */}
-        <div>
-          <input
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            placeholder="Expense Name"
-            required
-          />
-          <input
-            type="number"
-            name="amount"
-            value={formData.amount}
-            onChange={handleInputChange}
-            placeholder="Amount"
-            required
-          />
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleInputChange}
-            required
-          />
-          <select name="currency_code" value={formData.currency_code} onChange={handleInputChange} required>
+        <div className="form-control">Name:<input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="Enter expense name" /></div>
+        <div className="form-control">Amount:<input type="number" name="amount" value={formData.amount} onChange={handleChange} required placeholder="Enter amount" /></div>
+        <div className="form-control">Date:<input type="date" name="date" value={formData.date} onChange={handleChange} placeholder="Select date" /></div>
+        <div className="form-control">Currency:
+          <select name="currency_code" value={formData.currency_code} onChange={handleChange}>
+            <option value="">Select Currency</option>
             <option value="USD">USD</option>
             <option value="INR">INR</option>
             <option value="EUR">EUR</option>
             <option value="GBP">GBP</option>
             <option value="JPY">JPY</option>
           </select>
-          <select name="category_id" value={formData.category_id} onChange={handleInputChange}>
+        </div>
+        <div className="form-control">Category:
+          <select name="category_id" value={formData.category_id} onChange={handleChange} required>
             <option value="">Select Category</option>
-            {categories.map((category) => (
-            <option key={category.id} value={category.id}>{category.name}</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>{category.name}</option>
             ))}
           </select>
         </div>
-  
-        {/* Shared and Group Specific Fields */}
-        {expenseType !== 'personal' && (
-          <div>
-            <select name="split_type" value={formData.split_type} onChange={handleInputChange} required>
-              <option value="equal">Equal</option>
-              <option value="exact_amount">Exact Amount</option>
-              <option value="percentage">Percentage</option>
-              <option value="by_shares">By Shares</option>
-            </select>
-  
-            {/* Dynamic Shared Details Fields */}
-            {formData.sharedDetails.map((detail, index) => (
-              <div key={index}>
-                <select name="user_id" value={detail.user_id} onChange={(e) => handleSharedDetailsChange(index, 'user_id', e.target.value)} required>
-                  <option value="">Select Friend</option>
-                  {friends.map(friend => (
-                    <option key={friend.id} value={friend.id}>{friend.first_name}</option>
-                  ))}
-                </select>
-                <input type="number" name="paid_amount" value={detail.paid_amount} onChange={(e) => handleSharedDetailsChange(index, 'paid_amount', e.target.value)} placeholder="Paid Amount" required />
-                {formData.split_type !== 'equal' && (
-                  <input type="number" name="owed_amount" value={detail.owed_amount} onChange={(e) => handleSharedDetailsChange(index, 'owed_amount', e.target.value)} placeholder={formData.split_type === 'percentage' ? 'Percentage' : 'Owed Amount'} required />
-                )}
-                <button type="button" onClick={() => removeSharedDetail(index)}>Remove</button>
-              </div>
-            ))}
-            <button type="button" onClick={addSharedDetail}>Add Friend</button>
-          </div>
-        )}
-  
-        {/* Group Dropdown for Group Expense */}
-        {expenseType === 'group' && (
-          <select name="group_id" value={formData.group_id} onChange={handleInputChange} required>
-            <option value="">Select Group</option>
-            {groups.map(group => (
-              <option key={group.id} value={group.id}>{group.name}</option>
-            ))}
-          </select>
-        )}
-  
-        {/* Actions */}
-        <div>
-      {/* Feedback message */}
-      {feedback.message && (
-        <p style={{ color: feedback.type === 'error' ? 'red' : 'green' }}>{feedback.message}</p>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Form fields and buttons here */}
+        {renderExpenseTypeSpecificFields()}
         <button type="submit">Create Expense</button>
-        <button type="button" onClick={onCancel}>Cancel</button>
+        <button type="button" onClick={onRequestClose}>Cancel</button>
       </form>
-    </div>
-      </form>
-    </div>
+    </Modal>
   );
+  
+  
+  function renderExpenseTypeSpecificFields() {
+    if (expenseType === 'personal') return null;
+  
+    // Helper function to determine the label based on the split type
+    const determineOweLabel = (splitType) => {
+      switch (splitType) {
+        case 'percentage':
+          return 'Percentage:';
+        case 'by_shares':
+          return 'Number of shares:';
+        case 'exact_amount':
+          return 'Owed Amount:';
+        default:
+          return 'Amount you owe'; // Default case for 'equal', can be hidden if not necessary
+      }
+    };
+  
+    return (
+      <div>
+        <label>Split Type:
+          <select name="split_type" value={formData.split_type} onChange={handleChange}>
+            <option value="equal">Equal</option>
+            <option value="exact_amount">Exact Amount</option>
+            <option value="percentage">Percentage</option>
+            <option value="by_shares">By Shares</option>
+          </select>
+        </label>
+        {/* Rendering current user details */}
+        <div>
+          <label>You Paid:
+            <input
+                type="number"
+                value={formData.users[0].paidAmount}
+                onChange={(e) => handleUserChange(0, 'paidAmount', e.target.value)}
+                placeholder="Amount you paid"
+            />
+          </label>
+          {formData.split_type !== 'equal' && (  // Conditionally render based on split type
+            <label>{determineOweLabel(formData.split_type)}
+              <input
+                  type="number"
+                  value={formData.users[0].owedAmount}
+                  onChange={(e) => handleUserChange(0, 'owedAmount', e.target.value)}
+                  placeholder="Enter value"
+              />
+            </label>
+          )}
+        </div>
+        {/* Rendering other users details */}
+        {formData.users.slice(1).map((user, index) => (
+          <div key={index + 1}>
+            <label>User:
+              <select value={user.id} onChange={(e) => handleUserChange(index + 1, 'id', e.target.value)}>
+                <option value="">Select Friend</option>
+                {friends.map(friend => (
+                  <option key={friend.id} value={friend.id}>{friend.first_name}</option>
+                ))}
+              </select>
+            </label>
+            <label>Paid Amount:
+              <input type="number" value={user.paidAmount} onChange={(e) => handleUserChange(index + 1, 'paidAmount', e.target.value)} placeholder="Amount paid by user" />
+            </label>
+            {formData.split_type !== 'equal' && (
+              <label>{determineOweLabel(formData.split_type)}
+                <input type="number" value={user.owedAmount} onChange={(e) => handleUserChange(index + 1, 'owedAmount', e.target.value)} />
+              </label>
+            )}
+            <button type="button" onClick={() => removeUserField(index + 1)}>Remove user</button>
+          </div>
+        ))}
+        <button type="button" onClick={addUserField}>Add User</button>
+        {expenseType === 'group' && (
+          <label>Group:
+            <select name="group_id" value={formData.group_id} onChange={handleChange} required>
+              <option value="">Select Group</option>
+              {groups.map(group => (
+                <option key={group.id} value={group.id}>{group.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+    );
+  }  
+   
 };
 
 export default CreateExpenseForm;

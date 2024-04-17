@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import CreateExpenseForm from '../components/CreateExpenseForm';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState({ personalExpenses: [], sharedAndGroupExpenses: [] });
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate(); // Use the useNavigate hook
 
   useEffect(() => {
@@ -40,6 +42,8 @@ const Expenses = () => {
   return (
     <div>
       <h2>My Expenses</h2>
+      <button onClick={() => setIsModalOpen(true)}>Create Expense</button>
+      <CreateExpenseForm isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} />
       <div>
         <h3>Personal Expenses</h3>
         {expenses.personalExpenses.length > 0 ? (

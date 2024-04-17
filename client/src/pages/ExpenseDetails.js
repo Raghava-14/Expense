@@ -58,9 +58,7 @@ const ExpenseDetailPage = () => {
           <p>Amount: ${expenseDetails.amount}</p>
           <p>Date: {new Date(expenseDetails.date).toLocaleDateString()}</p>
           <p>Category: {expenseDetails.categoryName}</p>
-          <p>Created By: {expenseDetails.createdBy}</p>
           <p>Created At: {expenseDetails.createdAt}</p>
-          <p>Updated By: {expenseDetails.updatedBy}</p>
           <p>Updated At: {expenseDetails.updatedAt}</p>
           {expenseDetails.deletedAt && (
             <>
@@ -70,6 +68,8 @@ const ExpenseDetailPage = () => {
           )}
           {expenseDetails.sharedExpensesDetails && (
             <>
+            <p>Created By: {expenseDetails.createdBy}</p>
+            <p>Updated By: {expenseDetails.updatedBy}</p>
               <h3>Shared Details</h3>
               {expenseDetails.sharedExpensesDetails.map((detail, index) => (
                 <div key={index}>
