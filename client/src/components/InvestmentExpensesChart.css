@@ -1,0 +1,92 @@
+.container {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+    max-width: 1200px; /* Adjust width as necessary */
+    margin: 20px auto; /* Center the container on the page */
+    padding: 20px;
+    background-color: #ffffff; /* Background color for the entire container */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Soft shadow for some depth */
+  }
+  
+  .data-section,
+  .chart-section {
+    background-color: #f7f7f7; /* Light grey background for content cards */
+    padding: 20px;
+    border-radius: 5px;
+    overflow: hidden; /* Ensures no overflow from internal elements */
+  }
+  
+  .data-section {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .filters {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .filters label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filters input[type="number"],
+  .filters select {
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%; /* Ensures that the inputs use the full width of the label */
+  }
+  
+  .expense-summary {
+    flex: 1;
+  }
+  
+  .total-spent {
+    background-color: #e6e6e6; /* Slightly darker grey for the total spent card */
+    padding: 15px;
+    margin-bottom: 20px; /* Adds some space between sections */
+    border-radius: 5px;
+  }
+  
+  .category-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+  }
+  
+  .category-card {
+    background-color: #e0e0e0; /* Even darker grey for category cards */
+    padding: 15px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .chart-section {
+    height: 400px; /* Adjust height for the chart to fit well */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
+  
+    .filters {
+      flex-direction: column;
+    }
+  
+    .filters label {
+      margin-bottom: 10px; /* Adds space between filter inputs on smaller screens */
+    }
+  }
+  
