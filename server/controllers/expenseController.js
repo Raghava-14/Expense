@@ -426,7 +426,7 @@ exports.restoreExpense = async (req, res, next) => {
 //Update an expense
 
 
-//Categorize expenses for a month
+// Categorize expenses for a month
 exports.getMonthlyExpensesByCategory = async (req, res) => {
   const userId = req.user.id;
   const { year, month, expenseType } = req.query;
@@ -434,68 +434,71 @@ exports.getMonthlyExpensesByCategory = async (req, res) => {
   const endDate = new Date(year, month, 0);
 
   try {
-      // Personal Expenses
-      let personalExpensesQuery = {};
-      if (expenseType === 'personal' || expenseType === 'both') {
-          personalExpensesQuery = {
-              created_by: userId,
-              date: { [Op.between]: [startDate, endDate] },
-              expense_type: 'personal'
-          };
-      }
+    let expensesQuery = {
+      date: { [Op.between]: [startDate, endDate] },
+      [Op.or]: []
+    };
 
-      // Shared or Group Expenses
-      let sharedExpensesQuery = {};
-      if (expenseType === 'shared' || expenseType === 'group' || expenseType === 'both') {
-          sharedExpensesQuery = {
-              expense_type: { [Op.or]: ['shared', 'group'] },
-              '$SharedExpenses.user_id$': userId,
-              '$SharedExpenses.paid_amount$': { [Op.gt]: 0 }
-          };
-      }
-
-      // Query Expenses Table
-      const expenses = await Expense.findAll({
-          attributes: [
-              [fn('SUM', literal('CASE WHEN "expense_type" = \'personal\' THEN "amount" ELSE "SharedExpenses"."paid_amount" END')), 'totalAmount'],
-              'category_id',
-              [literal('"Category"."name"'), 'categoryName'],
-          ],
-          where: {
-              [Op.or]: [personalExpensesQuery, sharedExpensesQuery],
-              date: { [Op.between]: [startDate, endDate] }
-          },
-          include: [{
-              model: SharedExpense,
-              as: 'SharedExpenses',
-              attributes: [],
-              required: false,
-          }, {
-              model: Category,
-              attributes: [],
-          }],
-          group: ['category_id', 'Category.name'],
-          raw: true,
+    if (expenseType === 'personal' || expenseType === 'both') {
+      expensesQuery[Op.or].push({
+        created_by: userId,
+        expense_type: 'personal'
       });
+    }
 
-      // Aggregate total spent
-      const totalAmountSpent = expenses.reduce((acc, { totalAmount }) => acc + parseFloat(totalAmount || 0), 0).toFixed(2);
-
-      res.json({
-          data: {
-              totalAmountSpent,
-              categoriesBreakdown: expenses.map(expense => ({
-                  categoryId: expense.category_id,
-                  categoryName: expense.categoryName,
-                  amount: parseFloat(expense.totalAmount).toFixed(2)
-              }))
-          }
+    if (expenseType === 'shared' || expenseType === 'group' || expenseType === 'both') {
+      expensesQuery[Op.or].push({
+        expense_type: { [Op.or]: ['shared', 'group'] },
+        '$SharedExpenses.user_id$': userId,
+        '$SharedExpenses.paid_amount$': { [Op.gt]: 0 }
       });
+    }
+
+    const expenses = await Expense.findAll({
+      attributes: [
+        [fn('SUM', literal('CASE WHEN "expense_type" = \'personal\' THEN "amount" ELSE "SharedExpenses"."paid_amount" END')), 'totalAmount'],
+        [literal('"Category->Parent"."id"'), 'parentCategoryId'], // Fetching parent category ID
+        [literal('"Category->Parent"."name"'), 'parentCategoryName'], // Fetching parent category name
+      ],
+      where: expensesQuery,
+      include: [{
+        model: SharedExpense,
+        as: 'SharedExpenses',
+        attributes: [],
+        required: false,
+      }, {
+        model: Category,
+        as: 'Category',
+        attributes: [],
+        include: [{ // Include parent category details
+          model: Category,
+          as: 'Parent',
+          attributes: []
+        }]
+      }],
+      group: ['Category->Parent.id', 'Category->Parent.name'],
+      raw: true,
+    });
+
+    // Aggregate total spent
+    const totalAmountSpent = expenses.reduce((acc, item) => acc + parseFloat(item.totalAmount || 0), 0).toFixed(2);
+
+    res.json({
+      data: {
+        totalAmountSpent,
+        categoriesBreakdown: expenses.map(expense => ({
+          categoryId: expense.parentCategoryId,
+          categoryName: expense.parentCategoryName,
+          amount: parseFloat(expense.totalAmount).toFixed(2)
+        }))
+      }
+    });
   } catch (error) {
-      console.error('Error fetching monthly investment expenses:', error);
-      res.status(500).send({ message: "Failed to fetch monthly investment expenses." });
+    console.error('Error fetching monthly expenses by category:', error);
+    res.status(500).send({ message: "Failed to fetch monthly expenses by category." });
   }
 };
+
 
 
 

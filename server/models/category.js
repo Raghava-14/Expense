@@ -7,11 +7,14 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Define association here
 
-      //Association for SubCategories referencing the parent category
-      Category.hasMany(models.Category, {as: 'Subcategories',foreignKey: 'parent_id'});
+      // Association for SubCategories referencing the parent category
+      Category.hasMany(models.Category, { as: 'Subcategories', foreignKey: 'parent_id' });
 
-      //Association for Expenses referencing the category
-      Category.hasMany(models.Expense, {as: 'Expenses',foreignKey: 'category_id'});
+      // Reverse association for accessing the parent category
+      Category.belongsTo(models.Category, { as: 'Parent', foreignKey: 'parent_id' });
+
+      // Association for Expenses referencing the category
+      Category.hasMany(models.Expense, { as: 'Expenses', foreignKey: 'category_id' });
     }
   };
   Category.init({
@@ -21,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     name: DataTypes.STRING,
-    parent_id: DataTypes.INTEGER,
+    parent_id: DataTypes.INTEGER, // This is the foreign key to the same table for parent categories
   }, {
     sequelize,
     modelName: 'Category',
