@@ -14,6 +14,7 @@ import ExpenseDetails from './pages/ExpenseDetails';
 import Friends from './pages/Friends';
 import Groups from './pages/Groups';
 import GroupDetails from './pages/GroupDetails';
+import Balances from './pages/Balances';
 
 const Header = () => {
   const location = useLocation(); // To determine the current route
@@ -68,6 +69,7 @@ function App() {
             <Route path="insights" element={<Insights />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="expenses/:expenseId" element={<ExpenseDetails />} />
+            <Route path="balances" element={<Balances />} />
             <Route path="friends" element={<Friends />} />
             <Route path="groups" element={<Groups />} />
             <Route path="groups/:groupId" element={<GroupDetails />} />

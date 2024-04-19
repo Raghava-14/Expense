@@ -8,6 +8,7 @@ const Dashboard = () => {
       <div className="w-64 bg-gray-800 text-white flex flex-col">
         <NavLink to="/dashboard/insights" className={({ isActive }) => isActive ? "bg-blue-500 p-4" : "p-4"}>Insights</NavLink>
         <NavLink to="/dashboard/expenses" className={({ isActive }) => isActive ? "bg-blue-500 p-4" : "p-4"}>Expenses</NavLink>
+        <NavLink to="/dashboard/balances" className={({ isActive }) => isActive ? "bg-blue-500 p-4" : "p-4"}>Balances</NavLink>
         <NavLink to="/dashboard/friends" className={({ isActive }) => isActive ? "bg-blue-500 p-4" : "p-4"}>Friends</NavLink>
         <NavLink to="/dashboard/groups" className={({ isActive }) => isActive ? "bg-blue-500 p-4" : "p-4"}>Groups</NavLink>
         <button onClick={() => {localStorage.removeItem('token'); window.location.href='/';}} className="p-4">Logout</button>
