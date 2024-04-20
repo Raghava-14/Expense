@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './ExpenseDetails.css';
 
 const ExpenseDetailPage = () => {
   const { expenseId } = useParams();
@@ -30,7 +31,7 @@ const ExpenseDetailPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Expense successfully deleted');
-      navigate('/dashboard/expenses'); // Adjust the navigation path as needed
+      navigate('/dashboard/expenses');
     } catch (error) {
       console.error("Error deleting expense:", error);
     }
@@ -43,55 +44,61 @@ const ExpenseDetailPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Expense successfully restored');
-      fetchExpenseDetails(); // Refresh the expense details
+      fetchExpenseDetails();
     } catch (error) {
       console.error("Error restoring expense:", error);
     }
   };
 
   return (
-    <div>
+    <div className="detail-card">
       {expenseDetails ? (
-        <div>
-          <h2>Expense Details</h2>
-          <p>Name: {expenseDetails.name}</p>
-          <p>Amount: ${expenseDetails.amount}</p>
-          <p>Date: {new Date(expenseDetails.date).toLocaleDateString()}</p>
-          <p>Category: {expenseDetails.categoryName}</p>
-          <p>Created At: {expenseDetails.createdAt}</p>
-          <p>Updated At: {expenseDetails.updatedAt}</p>
-          {expenseDetails.deletedAt && (
-            <>
-              <p>Deleted By: {expenseDetails.deletedBy}</p>
-              <p>Deleted At: {expenseDetails.deletedAt}</p>
-            </>
-          )}
-          {expenseDetails.sharedExpensesDetails && (
-            <>
-            <p>Created By: {expenseDetails.createdBy}</p>
-            <p>Updated By: {expenseDetails.updatedBy}</p>
-              <h3>Shared Details</h3>
-              {expenseDetails.sharedExpensesDetails.map((detail, index) => (
-                <div key={index}>
-                  <p>User Name: {detail.userName}</p>
-                  <p>Contribution: ${detail.Contribution}</p>
-                  <p>Share: ${detail.Share}</p>
+        <>
+          <h2 className="detail-header">Expense Details</h2>
+          <div className="detail-body">
+            <p><span className="field-name">Name:</span> {expenseDetails.name}</p>
+            <p><span className="field-name">Amount:</span> ${expenseDetails.amount}</p>
+            <p><span className="field-name">Date:</span> {new Date(expenseDetails.date).toLocaleDateString()}</p>
+            <p><span className="field-name">Category:</span> {expenseDetails.categoryName}</p>
+            <p><span className="field-name">Created At:</span> {expenseDetails.createdAt}</p>
+            <p><span className="field-name">Updated At:</span> {expenseDetails.updatedAt}</p>
+            {expenseDetails.deletedAt && (
+              <>
+                <p><span className="field-name">Deleted By:</span> {expenseDetails.deletedBy}</p>
+                <p><span className="field-name">Deleted At:</span> {expenseDetails.deletedAt}</p>
+              </>
+            )}
+            {expenseDetails.sharedExpensesDetails && (
+              <>
+              <p><span className="field-name">Created By:</span> {expenseDetails.createdBy}</p>
+              <p><span className="field-name">Updated By:</span> {expenseDetails.updatedBy}</p>
+                <h3 className="shared-details-header">Shared Details</h3>
+                <div className="shared-details-container">
+                  {expenseDetails.sharedExpensesDetails.map((detail, index) => (
+                    <div className="shared-detail" key={index}>
+                      <p><span className="field-name">User Name:</span> {detail.userName}</p>
+                      <p><span className="field-name">Contribution:</span> ${detail.Contribution}</p>
+                      <p><span className="field-name">Share:</span> ${detail.Share}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </>
-          )}
+              </>
+            )}
+          </div>
           {!expenseDetails.deletedAt ? (
-            <button onClick={handleDelete}>Delete</button>
+            <button className="button button-alert" onClick={handleDelete}>Delete</button>
           ) : (
-            <button onClick={handleRestore}>Restore</button>
+            <button className="button button-primary" onClick={handleRestore}>Restore</button>
           )}
-          <button onClick={() => navigate('/dashboard/expenses')}>Back to Expenses</button>
-        </div>
+          <button className="button button-secondary" onClick={() => navigate('/dashboard/expenses')}>Back to Expenses</button>
+        </>
       ) : (
         <p>Loading expense details...</p>
       )}
     </div>
   );
+
+
 };
 
 export default ExpenseDetailPage;

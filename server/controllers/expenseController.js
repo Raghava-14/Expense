@@ -193,20 +193,24 @@ exports.getExpenses = async (req, res, next) => {
     });
 
     let personalExpenses = [];
-    let sharedAndGroupExpenses = [];
+    let sharedExpenses = [];
+    let groupExpenses = [];
 
     allExpenses.forEach(expense => {
       const formattedExpense = formatExpenseResponse(expense, userId); // Pass userId as an argument
       if (expense.expense_type === 'personal') {
         personalExpenses.push(formattedExpense);
-      } else {
-        sharedAndGroupExpenses.push(formattedExpense);
+      } else if (expense.expense_type === 'shared') {
+        sharedExpenses.push(formattedExpense);
+      } else if (expense.expense_type === 'group') {
+        groupExpenses.push(formattedExpense);
       }
     });
 
     res.status(200).json({
       personalExpenses,
-      sharedAndGroupExpenses
+      sharedExpenses,
+      groupExpenses
     });
   } catch (error) {
     console.error('Error viewing expenses:', error);
