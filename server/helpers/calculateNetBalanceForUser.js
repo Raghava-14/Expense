@@ -18,6 +18,7 @@ async function calculateNetBalanceForUser(userId) {
             }
         }]
     });
+    
 
     // Calculate net balance, considering only non-deleted expenses
     expenses.forEach(expense => {
