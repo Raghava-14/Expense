@@ -60,30 +60,32 @@ const ExpenseDetailPage = () => {
             <p><span className="field-name">Amount:</span> ${expenseDetails.amount}</p>
             <p><span className="field-name">Date:</span> {new Date(expenseDetails.date).toLocaleDateString()}</p>
             <p><span className="field-name">Category:</span> {expenseDetails.categoryName}</p>
-            <p><span className="field-name">Created At:</span> {expenseDetails.createdAt}</p>
-            <p><span className="field-name">Updated At:</span> {expenseDetails.updatedAt}</p>
+            {expenseDetails.groupName && <p><span className="field-name">Group:</span> {expenseDetails.groupName}</p>}
+            <p>
+              <span className="field-name">Created At:</span>
+              {expenseDetails.createdAt} by {expenseDetails.createdBy}
+            </p>
+            <p>
+              <span className="field-name">Updated At:</span>
+              {expenseDetails.updatedAt} by {expenseDetails.updatedBy}
+            </p>
             {expenseDetails.deletedAt && (
               <>
                 <p><span className="field-name">Deleted By:</span> {expenseDetails.deletedBy}</p>
                 <p><span className="field-name">Deleted At:</span> {expenseDetails.deletedAt}</p>
               </>
             )}
-            {expenseDetails.sharedExpensesDetails && (
-              <>
-              <p><span className="field-name">Created By:</span> {expenseDetails.createdBy}</p>
-              <p><span className="field-name">Updated By:</span> {expenseDetails.updatedBy}</p>
-                <h3 className="shared-details-header">Shared Details</h3>
-                <div className="shared-details-container">
-                  {expenseDetails.sharedExpensesDetails.map((detail, index) => (
-                    <div className="shared-detail" key={index}>
-                      <p><span className="field-name">User Name:</span> {detail.userName}</p>
-                      <p><span className="field-name">Contribution:</span> ${detail.Contribution}</p>
-                      <p><span className="field-name">Share:</span> ${detail.Share}</p>
-                    </div>
-                  ))}
+            <div className="shared-details-section">
+              <h3 className="shared-details-header">Contribution and Share Details</h3>
+              <p><span className="field-name">Your Contribution:</span> ${expenseDetails.yourContribution}</p>
+              <p><span className="field-name">Your Share:</span> ${expenseDetails.yourShare}</p>
+              {expenseDetails.sharedExpensesDetails.map((detail, index) => (
+                <div className="shared-detail" key={index}>
+                  <p><span className="field-name">{detail.userName}'s Contribution:</span> ${detail.Contribution}</p>
+                  <p><span className="field-name">{detail.userName}'s Share:</span> ${detail.Share}</p>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
           </div>
           {!expenseDetails.deletedAt ? (
             <button className="button button-alert" onClick={handleDelete}>Delete</button>
@@ -97,8 +99,8 @@ const ExpenseDetailPage = () => {
       )}
     </div>
   );
-
-
+  
+  
 };
 
 export default ExpenseDetailPage;

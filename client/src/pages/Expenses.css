@@ -18,11 +18,29 @@
     border-left: 5px solid #007BFF;
     cursor: pointer;
     transition: background-color 0.3s, border-color 0.3s;
-  }
-  
-  .expense-list li:hover {
+}
+
+.expense-list li:hover {
     background-color: #f1f1f1;
     border-left-color: #0056b3;
+}
+
+.expense-list li.deleted {
+    opacity: 0.5;
+    color: #999; /* Gray out soft-deleted expenses */
+    text-decoration: line-through; /* Add a strikethrough effect */
+    font-style: italic; /* Italicize to indicate deletion */
+    border-left: 5px solid #dc3545;
+}
+
+.expense-list li.deleted:hover {
+    border-left-color: #c82333;
+}
+
+.soft-deleted {
+    color: red;
+    font-weight: bold;
+    margin-left: 10px;
   }
   
   .create-expense-button {

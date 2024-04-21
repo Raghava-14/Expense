@@ -187,7 +187,7 @@ exports.getExpenses = async (req, res, next) => {
         },
         { model: Category, as: 'Category', attributes: ['name'] }
       ],
-      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type', 'created_by', 'deletedAt'],
+      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type', 'deletedAt'],
       paranoid: false,
       order: [['date', 'DESC']]
     });
@@ -229,7 +229,8 @@ function formatExpenseResponse(expense, userId) {
     splitType: expense.split_type,
     categoryId: expense.category_id,
     expenseType: expense.expense_type,
-    category: expense.Category?.name
+    category: expense.Category?.name,
+    deletedAt: expense.deletedAt
   };
 
   if (expense.expense_type !== 'personal') {
@@ -238,7 +239,7 @@ function formatExpenseResponse(expense, userId) {
     expenseResponse.yourContribution = sharedExpense.paid_amount || null;
     expenseResponse.yourShare = sharedExpense.owed_amount || null;
     if (sharedExpense.Group) {
-      expenseResponse.groupName = sharedExpense.Group.name; // Now correctly referenced
+      expenseResponse.groupName = sharedExpense.Group.name;
     }
   }
 
@@ -252,11 +253,9 @@ exports.getExpenseDetails = async (req, res, next) => {
   const { expenseId } = req.params;
 
   try {
-    // Fetch the expense, regardless of type
     const expense = await Expense.findOne({
       where: { id: expenseId },
       paranoid: false,
-      attributes: ['id', 'name', 'amount', 'date', 'split_type', 'category_id', 'expense_type', 'createdAt', 'updated_by','updatedAt', 'deleted_by', 'deletedAt'],
       include: [
         {
           model: Category,
@@ -265,27 +264,36 @@ exports.getExpenseDetails = async (req, res, next) => {
         {
           model: SharedExpense,
           as: 'SharedExpenses',
-          attributes: ['paid_amount', 'owed_amount'],
-          include: [{ // Include user details for shared expenses
-            model: User, as: 'User', attributes: ['first_name'] },
-            { model: Group, as: 'Group', attributes: ['name'] }
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: ['id', 'first_name']
+            },
+            {
+              model: Group,
+              as: 'Group',
+              attributes: ['name'],
+              required: false
+            }
           ],
           required: false,
+          paranoid: false
         },
-        { // Include creator's first name for all expenses
+        {
           model: User,
           as: 'Creator',
-          attributes: ['first_name'],
+          attributes: ['first_name']
         },
-        { // Include Updater's first name for all expenses
+        {
           model: User,
           as: 'Updater',
-          attributes: ['first_name'],
+          attributes: ['first_name']
         },
-        { // Include Deleter's first name for all expenses
+        {
           model: User,
           as: 'Deleter',
-          attributes: ['first_name'],
+          attributes: ['first_name']
         }
       ],
     });
@@ -294,7 +302,14 @@ exports.getExpenseDetails = async (req, res, next) => {
       return res.status(404).json({ message: "Expense not found." });
     }
 
-    // Prepare the response object based on expense type
+    let groupName = null;
+    // Attempt to find a group name directly from shared expenses
+    expense.SharedExpenses.forEach(se => {
+      if (se.Group && se.Group.name) {
+        groupName = se.Group.name;
+      }
+    });
+
     let expenseDetails = {
       id: expense.id,
       name: expense.name,
@@ -304,30 +319,29 @@ exports.getExpenseDetails = async (req, res, next) => {
       expenseType: expense.expense_type,
       categoryName: expense.Category.name,
       splitType: expense.split_type,
-      createdAt: expense.createdAt.toISOString().split('T')[0], // Just the date part
-      createdBy: expense.Creator?.first_name, // Creator's first name
+      createdAt: expense.createdAt.toISOString().split('T')[0],
+      createdBy: expense.Creator?.first_name,
       updatedAt: expense.updatedAt.toISOString().split('T')[0],
       updatedBy: expense.Updater?.first_name,
       deletedBy: expense.Deleter?.first_name,
       deletedAt: expense.deletedAt?.toISOString().split('T')[0],
+      groupName: groupName,  // Add the group name at this level for visibility
+      sharedExpensesDetails: []
     };
 
-    if (expense.expense_type === 'personal') {
-      // Exclude split_type for personal expenses
-      delete expenseDetails.splitType;
-    } else {
-      // For shared or group expenses, include user contributions and shares
-      expenseDetails.sharedExpensesDetails = expense.SharedExpenses.map(sharedExpense => ({
+    expense.SharedExpenses.forEach(sharedExpense => {
+      const sharedDetails = {
         userName: sharedExpense.User.first_name,
         Contribution: sharedExpense.paid_amount,
         Share: sharedExpense.owed_amount,
-      }));
-
-      if (expense.expense_type === 'group') {
-        // Additional detail for group expenses
-        expenseDetails.groupName = expense.Group?.name;
+      };
+      if (sharedExpense.User.id === userId) {
+        expenseDetails.yourContribution = sharedDetails.Contribution;
+        expenseDetails.yourShare = sharedDetails.Share;
+      } else {
+        expenseDetails.sharedExpensesDetails.push(sharedDetails);
       }
-    }
+    });
 
     res.status(200).json({ expenseDetails });
   } catch (error) {
@@ -335,6 +349,9 @@ exports.getExpenseDetails = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
 
 
 //Soft delete an expense
