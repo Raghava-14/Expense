@@ -39,7 +39,7 @@ const Expenses = () => {
 
   return (
     <div>
-      <h2>My Expenses</h2>
+      <h2 className="title">My Expenses</h2>
       <button onClick={() => setIsModalOpen(true)} className="create-expense-button">Create Expense</button>
       <CreateExpenseForm isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} />
 

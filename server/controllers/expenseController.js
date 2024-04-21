@@ -123,6 +123,84 @@ exports.createExpense = async (req, res, next) => {
   };
 
 
+  //Update an expense
+exports.updateExpense = async (req, res, next) => {
+  const userId = req.user.id;  // Extracting user ID from JWT token, adjust as needed
+  const { expenseId } = req.params;
+  const {
+    name,
+    amount,
+    currency_code,
+    category_id,
+    expense_type,
+    receipt,
+    date = new Date(),
+    sharedDetails,
+    group_id,
+  } = req.body; 
+
+  // Basic validation: Expense amount should be greater than 0
+  if (amount <= 0) {
+    return res.status(400).send({ message: "Expense amount must be greater than 0." });
+  }
+
+  // Begin transaction
+  try {
+    const result = await sequelize.transaction(async (t) => {
+      
+      const expense = await Expense.findByPk(expenseId, { transaction: t });
+      if (!expense) {
+        return res.status(404).send({ message: "Expense not found." });
+      }
+
+      // Check if the user is authorized to update the expense (e.g., is the creator or has admin rights)
+      if (expense.created_by !== userId) {
+        return res.status(403).send({ message: "You are not authorized to update this expense." });
+      }
+
+      // Update the expense details
+      await Expense.update({
+        name,
+        amount,
+        date,
+        currency_code,
+        category_id,
+        expense_type,
+        receipt,
+        updated_by: userId
+      }, { where: { id: expenseId }, transaction: t });
+
+      // Update shared details for shared or group expenses
+      if (expense_type === 'shared' || expense_type === 'group') {
+        // Remove existing shared expense records
+        await SharedExpense.destroy({
+          where: { expense_id: expenseId },
+          transaction: t
+        });
+
+        // Re-create shared expense records if necessary
+        const sharedExpensesData = calculateSharedExpenses({
+          amount,
+          splitType: sharedDetails.splitType,
+          users: sharedDetails.users,
+          groupId: group_id,
+          expenseId: expenseId,
+        });
+
+        await SharedExpense.bulkCreate(sharedExpensesData, { transaction: t });
+      }
+
+      return { message: "Expense updated successfully" };
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
 //Calculate Balances
 exports.getUserBalance = async (req, res, next) => {
   try {

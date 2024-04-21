@@ -2,11 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './ExpenseDetails.css';
+import UpdateExpenseForm from '../components/UpdateExpenseForm';
 
 const ExpenseDetailPage = () => {
   const { expenseId } = useParams();
   const [expenseDetails, setExpenseDetails] = useState(null);
   const navigate = useNavigate();
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
 
   const fetchExpenseDetails = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -87,6 +89,14 @@ const ExpenseDetailPage = () => {
               ))}
             </div>
           </div>
+          <button onClick={() => setShowUpdateForm(true)}>Edit Expense</button>
+          {showUpdateForm && (
+            <UpdateExpenseForm
+              isOpen={showUpdateForm}
+              onRequestClose={() => setShowUpdateForm(false)}
+              existingDetails={expenseDetails}
+            />
+          )}
           {!expenseDetails.deletedAt ? (
             <button className="button button-alert" onClick={handleDelete}>Delete</button>
           ) : (

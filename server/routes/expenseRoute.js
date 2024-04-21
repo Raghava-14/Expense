@@ -13,7 +13,7 @@ router.get('/', verifyToken, expenseController.getExpenses);
 router.get('/:expenseId/details', verifyToken, expenseController.getExpenseDetails);
 
 //Update an expense
-//router.put('/:expenseId', verifyToken, expenseController.updateExpense); 
+router.put('/:expenseId', verifyToken, expenseController.updateExpense); 
 
 //Delete an expense
 router.delete('/:expenseId', verifyToken, expenseController.deleteExpense); 
