@@ -1,0 +1,74 @@
+.expense-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-control label {
+    font-weight: bold; /* Makes all labels bold */
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-control input[type="text"],
+.form-control input[type="number"],
+.form-control select {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Ensures padding doesn't affect the width */
+}
+
+.radio-group {
+    display: flex;
+    gap: 10px; /* Adds space between radio buttons */
+}
+
+.button-submit {
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button-cancel {
+    background-color: #f44336; /* Red background */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button-cancel:hover,
+.button-submit:hover {
+    opacity: 0.9; /* Slight dim on hover */
+}
+
+.detail-section {
+    margin-top: 20px;
+}
+
+.detail-section div {
+    margin-bottom: 10px;
+}
+.expense-form-buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.button-add{
+    padding: 5px;
+    background-color: #28a745;
+    color: white;
+}
+
+.button-add-div{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+}

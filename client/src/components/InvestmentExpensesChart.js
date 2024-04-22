@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Doughnut } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './InvestmentExpensesChart.css'; // Ensure the correct path if needed
+import { Bar } from 'react-chartjs-2';
+
 
 const months = [
   { name: 'January', number: 1 },
@@ -47,25 +48,34 @@ const InvestmentExpensesChart = () => {
     fetchExpenses();
   }, [year, month, expenseType]);
 
-  // Data for the Doughnut chart
-  const doughnutData = {
-    labels: expenses?.categoriesBreakdown.map(item => item.categoryName),
-    datasets: [{
-      data: expenses?.categoriesBreakdown.map(item => item.amount),
-      backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F7464A', '#AC64AD'],
-      hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F7464A', '#AC64AD']
-    }]
-  };
 
-  const options = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top'
-      }
+const barData = {
+  labels: expenses?.categoriesBreakdown.map(item => item.categoryName),
+  datasets: [{
+    label: 'Investment by Category',
+    data: expenses?.categoriesBreakdown.map(item => item.amount),
+    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F7464A', '#AC64AD'],
+    borderColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F7464A', '#AC64AD'],
+    borderWidth: 1
+  }]
+};
+
+const options = {
+  maintainAspectRatio: false,
+  responsive: true,
+  scales: {
+    y: {
+      beginAtZero: true
     }
-  };
+  },
+  plugins: {
+    legend: {
+      display: false,
+    }
+  }
+};
+
+
 
   return (
     <div className="container">
@@ -90,6 +100,7 @@ const InvestmentExpensesChart = () => {
             <select value={expenseType} onChange={(e) => setExpenseType(e.target.value)}>
               <option value="personal">Personal</option>
               <option value="shared">Shared</option>
+              <option value="both">Both</option>
             </select>
           </label>
         </div>
@@ -109,9 +120,11 @@ const InvestmentExpensesChart = () => {
           </div>
         )}
       </div>
-      <div className="chart-section">
-        <Doughnut data={doughnutData} options={options} />
-      </div>
+
+<div className="chart-section">
+  <Bar data={barData} options={options} />
+</div>
+
     </div>
   );
 };

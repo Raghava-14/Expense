@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import axios from 'axios';
+import './CreateExpenseForm.css';
 
 Modal.setAppElement('#root');
 
@@ -127,8 +128,8 @@ const CreateExpenseForm = ({ isOpen, onRequestClose }) => {
         }));
       }
     }
-    if (newType === 'shared' || newType === 'group') {
-        addUserField(); // Automatically add a user field if none exist
+    if ((newType === 'shared' || newType === 'group') && formData.users.length <= 1) {
+        addUserField();
       }
   };
   
@@ -237,24 +238,31 @@ const addUserField = () => {
   };
   
   
-
   return (
     <Modal
       isOpen={isOpen}
       onRequestClose={onRequestClose}
       style={customStyles}
       contentLabel="Create Expense Modal"
-    >
+    > <div className="add-expense-modal-header" style={{ 
+        backgroundColor: '#d3d3d3',
+        padding: '25px',
+        fontSize: '22px',
+    }} >
       <h2>Create New Expense</h2>
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-control">
-          <label>Expense Type:
-            <div>
-              <label><input type="radio" name="expenseType" value="personal" checked={expenseType === 'personal'} onChange={handleExpenseTypeChange} /> Personal</label>
-              <label><input type="radio" name="expenseType" value="shared" checked={expenseType === 'shared'} onChange={handleExpenseTypeChange} /> Shared</label>
-              <label><input type="radio" name="expenseType" value="group" checked={expenseType === 'group'} onChange={handleExpenseTypeChange} /> Group</label>
-            </div>
-          </label>
+          <label>Expense Type:</label>
+          <div className="radio-group" style={{ 
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+           }}>
+            <label><input type="radio" name="expenseType" value="personal" checked={expenseType === 'personal'} onChange={handleExpenseTypeChange} /> Personal</label>
+            <label><input type="radio" name="expenseType" value="shared" checked={expenseType === 'shared'} onChange={handleExpenseTypeChange} /> Shared</label>
+            <label><input type="radio" name="expenseType" value="group" checked={expenseType === 'group'} onChange={handleExpenseTypeChange} /> Group</label>
+          </div>
         </div>
         <div className="form-control">Name:<input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="Enter expense name" /></div>
         <div className="form-control">Amount:<input type="number" name="amount" value={formData.amount} onChange={handleChange} required placeholder="Enter amount" /></div>
@@ -277,13 +285,29 @@ const addUserField = () => {
             ))}
           </select>
         </div>
+
+
+        {expenseType === 'group' && (
+            <label>Group :
+              <select name="group_id" value={formData.group_id} onChange={handleChange} required className="select-style" style={{ marginLeft: '5px' }}>
+                <option value="">Select Group</option>
+                {groups.map(group => (
+                  <option key={group.id} value={group.id}>{group.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
         {renderExpenseTypeSpecificFields()}
-        <button type="submit">Create Expense</button>
-        <button type="button" onClick={onRequestClose}>Cancel</button>
+        <div className='expense-form-buttons'> 
+        <button type="submit" className="button-submit">Create Expense</button>
+        <button type="button" onClick={onRequestClose} className="button-cancel">Cancel</button>
+        </div>
       </form>
+      </div>
     </Modal>
   );
   
+
   
   function renderExpenseTypeSpecificFields() {
     if (expenseType === 'personal') return null;
@@ -303,71 +327,65 @@ const addUserField = () => {
     };
   
     return (
-      <div>
-        <label>Split Type:
-          <select name="split_type" value={formData.split_type} onChange={handleChange}>
-            <option value="equal">Equal</option>
-            <option value="exact_amount">Exact Amount</option>
-            <option value="percentage">Percentage</option>
-            <option value="by_shares">By Shares</option>
-          </select>
-        </label>
-        {/* Rendering current user details */}
-        <div>
-          <label>You Paid:
-            <input
-                type="number"
-                value={formData.users[0].paidAmount}
-                onChange={(e) => handleUserChange(0, 'paidAmount', e.target.value)}
-                placeholder="Amount you paid"
-            />
+        <div className="detail-section">
+          <label>Split Type:
+            <select name="split_type" value={formData.split_type} onChange={handleChange} className="select-style">
+              <option value="equal">Equal</option>
+              <option value="exact_amount">Exact Amount</option>
+              <option value="percentage">Percentage</option>
+              <option value="by_shares">By Shares</option>
+            </select>
           </label>
-          {formData.split_type !== 'equal' && (  // Conditionally render based on split type
-            <label>{determineOweLabel(formData.split_type)}
+          <div>
+            <label>You Paid:
               <input
                   type="number"
-                  value={formData.users[0].owedAmount}
-                  onChange={(e) => handleUserChange(0, 'owedAmount', e.target.value)}
-                  placeholder="Enter value"
+                  value={formData.users[0].paidAmount}
+                  onChange={(e) => handleUserChange(0, 'paidAmount', e.target.value)}
+                  placeholder="Amount you paid"
+                  className="input-style"
               />
-            </label>
-          )}
-        </div>
-        {/* Rendering other users details */}
-        {formData.users.slice(1).map((user, index) => (
-          <div key={index + 1}>
-            <label>User:
-              <select value={user.id} onChange={(e) => handleUserChange(index + 1, 'id', e.target.value)}>
-                <option value="">Select Friend</option>
-                {friends.map(friend => (
-                  <option key={friend.id} value={friend.id}>{friend.first_name}</option>
-                ))}
-              </select>
-            </label>
-            <label>Paid Amount:
-              <input type="number" value={user.paidAmount} onChange={(e) => handleUserChange(index + 1, 'paidAmount', e.target.value)} placeholder="Amount paid by user" />
             </label>
             {formData.split_type !== 'equal' && (
               <label>{determineOweLabel(formData.split_type)}
-                <input type="number" value={user.owedAmount} onChange={(e) => handleUserChange(index + 1, 'owedAmount', e.target.value)} />
+                <input
+                    type="number"
+                    value={formData.users[0].owedAmount}
+                    onChange={(e) => handleUserChange(0, 'owedAmount', e.target.value)}
+                    placeholder="Enter value"
+                    className="input-style"
+                />
               </label>
             )}
-            <button type="button" onClick={() => removeUserField(index + 1)}>Remove user</button>
           </div>
-        ))}
-        <button type="button" onClick={addUserField}>Add User</button>
-        {expenseType === 'group' && (
-          <label>Group:
-            <select name="group_id" value={formData.group_id} onChange={handleChange} required>
-              <option value="">Select Group</option>
-              {groups.map(group => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-    );
+          {formData.users.slice(1).map((user, index) => (
+            <div key={index + 1} className="user-details">
+              <label>User:
+                <select value={user.id} onChange={(e) => handleUserChange(index + 1, 'id', e.target.value)} className="select-style">
+                  <option value="">Select Friend</option>
+                  {friends.map(friend => (
+                    <option key={friend.id} value={friend.id}>{friend.first_name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>Paid Amount:
+                <input type="number" value={user.paidAmount} onChange={(e) => handleUserChange(index + 1, 'paidAmount', e.target.value)} placeholder="Amount paid by user" className="input-style" />
+              </label>
+              {formData.split_type !== 'equal' && (
+                <label>{determineOweLabel(formData.split_type)}
+                  <input type="number" value={user.owedAmount} onChange={(e) => handleUserChange(index + 1, 'owedAmount', e.target.value)} className="input-style" />
+                </label>
+              )}
+              <button type="button" onClick={() => removeUserField(index + 1)} className="button-remove">Remove user</button>
+            </div>
+          ))}
+          <div className='button-add-div'> 
+          <button type="button" onClick={() => addUserField(true)} className="button-add">Add User</button>
+          
+          </div>
+        </div>
+      );
+      
   }  
    
 };

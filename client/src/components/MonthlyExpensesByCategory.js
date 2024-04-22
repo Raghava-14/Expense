@@ -90,6 +90,7 @@ const MonthlyExpensesByCategory = () => {
             <select value={expenseType} onChange={(e) => setExpenseType(e.target.value)}>
               <option value="personal">Personal</option>
               <option value="shared">Shared</option>
+              <option value="both">Both</option>
             </select>
           </label>
         </div>

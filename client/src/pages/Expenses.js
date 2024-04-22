@@ -38,17 +38,18 @@ const Expenses = () => {
   };
 
   return (
-    <div>
-      <h2 className="title">My Expenses</h2>
-      <button onClick={() => setIsModalOpen(true)} className="create-expense-button">Create Expense</button>
+    <div> 
+      <h2 className="title expenses-heading">My Expenses
+      <button onClick={() => setIsModalOpen(true)} className="create-expense-button">Create Expense</button> </h2>
+      
       <CreateExpenseForm isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} />
 
-      {['personalExpenses', 'sharedExpenses', 'groupExpenses'].map((category) => (
+      {['personal', 'shared', 'group'].map((category) => (
         <div key={category}>
-          <h3 className="expense-header">{category.replace(/Expenses$/, ' Expenses')}</h3>
-          {expenses[category].length > 0 ? (
+          <h3 className="expense-header">{`${category.charAt(0).toUpperCase() + category.slice(1)} Expenses`}</h3>
+          {expenses[`${category}Expenses`].length > 0 ? (
             <ul className="expense-list">
-              {expenses[category].map((expense) => (
+              {expenses[`${category}Expenses`].map((expense) => (
                 <li key={expense.id} onClick={() => handleExpenseClick(expense.id)}
                     className={`expense-item ${expense.deletedAt ? 'deleted' : ''}`}>
                   {expense.date.slice(0, 10)} - {expense.name} - ${expense.amount}

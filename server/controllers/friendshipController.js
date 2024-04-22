@@ -57,7 +57,7 @@ exports.sendFriendshipRequest = async (req, res) => {
             return Friendship.create({
                 requester_id: currentUserId,
                 addressee_id: addressee.id,
-                status: 'pending',
+                status: 'accepted',
                 updated_by: currentUserId
             })
             .then(() => res.send({ message: 'Friendship request sent successfully.' }))
