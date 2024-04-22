@@ -123,8 +123,8 @@ const UpdateExpenseForm = ({ isOpen, onRequestClose, existingDetails }) => {
           </select>
         </div>
         <div className="form-group">
-          <button type="submit">Update Expense</button>
-          <button type="button" onClick={onRequestClose}>Cancel</button>
+          <button type="submit" className="button-submit mr-2">Update Expense</button>
+          <button type="button" onClick={onRequestClose} className="button-cancel">Cancel</button>
         </div>
       </form>
     </Modal>

@@ -15,8 +15,19 @@
 
 .field-name {
     font-weight: bold;
+    margin-bottom: 5px;
     color: #333;
 }
+
+.your {
+    font-weight: bold;
+    margin-bottom: 5px;
+    padding-top: 10px;
+    color: #333;
+    padding-left: 10px;
+    
+}
+
 
 .detail-body p {
     font-size: 16px;
@@ -47,6 +58,9 @@
     background-color: #6c757d;
     color: white;
 }
+
+
+
 
 .button-secondary:hover {
     background-color: #5a6268;
@@ -79,10 +93,123 @@
 
 .shared-detail {
     padding: 10px;
-    border-bottom: 1px solid #EEE; /* Light border for separation between items */
+    border-top: 1px solid #EEE;
     margin-bottom: 5px;
 }
 
 .shared-detail:last-child {
     border-bottom: none; /* Remove bottom border from the last item */
 }
+
+/* Back to Expenses Button */
+.back-button {
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #7a7a7a;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .back-button:hover {
+    background-color: #232424;
+    box-shadow: 0px 15px 20px rgba(19, 19, 19, 0.4);
+    color: #fff;
+    transform: translateY(-3px);
+  }
+  
+  .back-button:active {
+    transform: translateY(-1px);
+  }
+
+  /* Edit Button */
+.edit-button {
+    margin-top: 14px;
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #19c759;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .edit-button:hover {
+    background-color: #13a644;
+    box-shadow: 0px 15px 20px rgba(19, 19, 19, 0.4);
+    color: #fff;
+    transform: translateY(-3px);
+  }
+  
+  .edit-button:active {
+    transform: translateY(-1px);
+  }
+
+  /* Delete Button */
+.delete-button {
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #cf3030;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .delete-button:hover {
+    background-color: #c00707;
+    box-shadow: 0px 15px 20px rgba(19, 19, 19, 0.4);
+    color: #fff;
+    transform: translateY(-3px);
+  }
+  
+  .delete-button:active {
+    transform: translateY(-1px);
+  }
+
+  /* Restore Button */
+.res-button {
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #0b8ee0;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .res-button:hover {
+    background-color: #085a9d;
+    box-shadow: 0px 15px 20px rgba(19, 19, 19, 0.4);
+    color: #fff;
+    transform: translateY(-3px);
+  }
+  
+  .res-button:active {
+    transform: translateY(-1px);
+  }
