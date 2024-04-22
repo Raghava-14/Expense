@@ -173,7 +173,7 @@ const GroupDetails = () => {
           <p><span className="field-name">Invitation Link:</span> <span className="field-value">{groupDetails.invitation_link}</span></p>
           <p><span className="field-name">Members:</span> <span className="field-value">{members}</span></p>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => setShowEditModal(true)} className="bg-blue-500 text-white px-10 py-2 mt-3 rounded-lg">Edit</button>
+            <button onClick={() => setShowEditModal(true)} className="bg-green-500 text-white px-10 py-2 mt-3 rounded-lg">Edit</button>
             <button onClick={handleGenerateNewLink} className="bg-blue-500 text-white px-6 py-2 mt-3 rounded-lg">Generate New Invitation Link</button>
             <button onClick={handleDeleteGroup} className="bg-red-500 text-white px-6 py-2 mt-3 rounded-lg">Delete Group</button>
             <button onClick={handleExitGroup} className="bg-gray-500 text-white px-6 py-2 mt-3 rounded-lg">Exit Group</button>
