@@ -101,8 +101,3 @@ If you encounter any issues:
 For further information on Node.js and React, you can visit:
 - [Node.js Official Documentation](https://nodejs.org/en/docs/)
 - [React Documentation](https://reactjs.org/docs/getting-started.html)
-
-## 8. Contact Information
-
-For additional support, contact the project maintainers at [your-email@example.com].
-```
