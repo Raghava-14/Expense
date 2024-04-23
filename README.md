@@ -1,4 +1,4 @@
-```
+
 # Expense Tracker Installation Guide
 
 This guide provides detailed steps to set up the Expense Tracker application locally.
