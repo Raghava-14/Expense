@@ -1,32 +1,103 @@
-# Expense
-Financial Management to track expenses
+```
+# Expense Tracker Installation Guide
 
+This guide provides detailed steps to set up the Expense Tracker application locally.
 
-## Features
+## Prerequisites
 
-- List of features
-- Another feature
+Before you begin, ensure you have the following installed:
+- Node.js
+- npm (Node Package Manager)
+- PostgreSQL
 
-## Getting Started
+## 1. Clone the Repository
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+Clone the project repository to your local machine using the following command:
 
-### Prerequisites
+```bash
+git clone <repository-url>
+```
 
-Initialize project with `npm init -y`
+## 2. Install Dependencies
 
+Navigate to both the `client` and `server` directories to install the required dependencies.
 
+### Server Dependencies
 
-### Installation
+```bash
+cd server
+npm install
+```
 
-A step-by-step series of examples that tell you how to get a development env running.
+### Client Dependencies
 
-1. Clone the repo
-`git clone https://github.com/Raghava-14/Expense`
+```bash
+cd ../client
+npm install
+```
 
-2. Install npm packages.
+## 3. Database Setup
 
- - `npm install express` in the server side directory
- - `npx create-react-app .` in the client side directory.
+Install PostgreSQL and create a database named `my_expense_tracker`. Use the following environment variables to configure your database connection in your `.env` file located in the `server` directory:
 
-3. Copy `.env.example` to `.env` and update the environment variables to your own settings.
+```
+DB_HOST=localhost
+DB_USER=raghav
+DB_PASSWORD=your_password
+DB_DATABASE=my_expense_tracker
+JWT_SECRET=your_secret_key_here
+```
+
+### Running Migrations
+
+Navigate back to the server directory to run migrations:
+
+```bash
+npx sequelize db:migrate
+```
+
+### Running Seeders
+
+Populate your database with initial data using the seeder files:
+
+```bash
+npx sequelize db:seed:all
+```
+
+## 4. Running the Application
+
+### Start the Backend Server
+
+In the server directory, start the Node.js server:
+
+```bash
+node app.js
+```
+
+### Start the Frontend Application
+
+In a new terminal window, navigate to the client directory and start the React application:
+
+```bash
+npm start
+```
+
+This should open `http://localhost:3001` in your default web browser automatically. If not, manually open this URL in your browser.
+
+## 5. Verifying the Installation
+
+Ensure that the application loads correctly and allows you to register a new user, log in, and interact with the application functionalities such as adding and tracking expenses.
+
+## 6. Troubleshooting
+
+If you encounter any issues:
+- Verify all dependencies are installed without errors.
+- Ensure the PostgreSQL database is operational and the `.env` file is configured correctly.
+- Confirm that the server and client are running on their respective ports.
+- Check that all initial data from the seeders loads correctly.
+
+## 7. Additional Resources
+
+For further information on Node.js and React, you can visit:
+- [Node.js Official Documentation](https://nodejs.org/en/docs/)
+- [React Documentation](https://reactjs.org/docs/getting-started.html)
