@@ -71,7 +71,7 @@ npx sequelize db:seed:all
 In the server directory, start the Node.js server:
 
 ```bash
-npm start
+node app.js
 ```
 
 ### Start the Frontend Application
